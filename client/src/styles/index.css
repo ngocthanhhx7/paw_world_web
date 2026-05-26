@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'FC DK Cool Crayon';
+  src: url('/fonts/FC-DK-Cool-Crayon.otf') format('opentype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-cream-50 text-cocoa-500 font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  .heading {
+    @apply font-display tracking-wide text-cocoa-500;
+  }
+}
+
+@layer components {
+  .container-paw {
+    @apply mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold
+           transition-all duration-200 ease-out disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-sun-400 text-cocoa-700 hover:bg-sun-500 hover:-translate-y-0.5 shadow-soft;
+  }
+  .btn-outline {
+    @apply btn border-2 border-cocoa-500 text-cocoa-500 hover:bg-cocoa-500 hover:text-white bg-white;
+  }
+  .btn-ghost {
+    @apply btn text-cocoa-500 hover:bg-lavender-100;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-cocoa-500 border-2 border-cocoa-500 hover:bg-lavender-100;
+  }
+
+  .input {
+    @apply w-full rounded-2xl border border-lavender-200 bg-white px-4 py-3 text-sm
+           focus:border-lavender-400 focus:outline-none focus:ring-2 focus:ring-lavender-200
+           placeholder:text-cocoa-200;
+  }
+
+  .card {
+    @apply rounded-3xl bg-white shadow-card overflow-hidden;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+  }
+  .badge-sale {
+    @apply badge bg-coral-500 text-white;
+  }
+  .badge-new {
+    @apply badge bg-leaf-500 text-white;
+  }
+
+  .nav-link {
+    @apply text-sm font-semibold text-cocoa-500 hover:text-sun-500 transition-colors;
+  }
+  .nav-link-active {
+    @apply text-sun-500;
+  }
+
+  /* "Sticker" tape decoration for testimonials */
+  .tape {
+    @apply absolute h-5 w-20 rounded-sm rotate-[-8deg];
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.4),
+      rgba(255, 255, 255, 0.4) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+}
+
+/* Marquee for brand scroll */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 22s linear infinite;
+}

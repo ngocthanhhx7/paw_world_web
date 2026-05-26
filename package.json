@@ -1,0 +1,21 @@
+{
+  "name": "paw-world-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Paw World - Web bán đồ ăn cho mèo (monorepo: client + server)",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces --include-workspace-root",
+    "dev": "concurrently -n SERVER,CLIENT -c green,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev:server": "npm run dev -w server",
+    "dev:client": "npm run dev -w client",
+    "seed": "npm run seed -w server",
+    "build:client": "npm run build -w client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
