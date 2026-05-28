@@ -18,7 +18,7 @@ export default function CartPage() {
     return (
       <div className="container-paw py-20 text-center">
         <img src="/assets/cat/image 168.png" alt="" className="w-40 mx-auto" />
-        <h1 className="font-display text-3xl mt-4 text-cocoa-700">Giỏ hàng đang trống</h1>
+        <h1 className="text-3xl mt-4 text-cocoa-700">Giỏ hàng đang trống</h1>
         <p className="text-cocoa-400 mt-2">Thêm vài món ngon để boss ăn nào!</p>
         <Link to="/danh-muc" className="btn-primary mt-6 inline-flex">
           <ShoppingBag size={16} /> Khám phá sản phẩm
@@ -29,7 +29,7 @@ export default function CartPage() {
 
   return (
     <div className="container-paw py-10">
-      <h1 className="font-display text-3xl md:text-4xl text-cocoa-700">Giỏ hàng của bạn</h1>
+      <h1 className="text-3xl md:text-4xl text-cocoa-700">Giỏ hàng của bạn</h1>
       <p className="text-cocoa-400 mt-1">Có {items.length} sản phẩm trong giỏ</p>
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-8">

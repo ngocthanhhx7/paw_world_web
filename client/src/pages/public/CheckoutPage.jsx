@@ -38,7 +38,7 @@ export default function CheckoutPage() {
   if (!items.length) {
     return (
       <div className="container-paw py-20 text-center">
-        <h1 className="font-display text-3xl text-cocoa-700">Giỏ hàng đang trống</h1>
+        <h1 className="text-3xl text-cocoa-700">Giỏ hàng đang trống</h1>
         <Link to="/danh-muc" className="btn-primary mt-4 inline-flex">
           Mua sắm ngay
         </Link>
@@ -79,13 +79,13 @@ export default function CheckoutPage() {
       <Link to="/gio-hang" className="inline-flex items-center text-sm text-cocoa-400 hover:text-cream-700">
         <ChevronLeft size={16} /> Quay lại giỏ hàng
       </Link>
-      <h1 className="font-display text-3xl md:text-4xl text-cocoa-700 mt-2">Thanh toán</h1>
+      <h1 className="text-3xl md:text-4xl text-cocoa-700 mt-2">Thanh toán</h1>
 
       <form onSubmit={handleSubmit} className="grid lg:grid-cols-[1fr_400px] gap-8 mt-8">
         {/* Info */}
         <div className="space-y-6">
           <section className="card p-6">
-            <h2 className="font-display text-xl text-cocoa-700">1. Thông tin liên hệ</h2>
+            <h2 className="text-xl text-cocoa-700">1. Thông tin liên hệ</h2>
             <div className="grid md:grid-cols-2 gap-3 mt-4">
               <input
                 className="input"
@@ -109,7 +109,7 @@ export default function CheckoutPage() {
           </section>
 
           <section className="card p-6">
-            <h2 className="font-display text-xl text-cocoa-700">2. Địa chỉ giao hàng</h2>
+            <h2 className="text-xl text-cocoa-700">2. Địa chỉ giao hàng</h2>
             <div className="grid md:grid-cols-2 gap-3 mt-4">
               <input
                 className="input md:col-span-2"
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
           </section>
 
           <section className="card p-6">
-            <h2 className="font-display text-xl text-cocoa-700">3. Hình thức thanh toán</h2>
+            <h2 className="text-xl text-cocoa-700">3. Hình thức thanh toán</h2>
             <div className="space-y-3 mt-4">
               {PAYMENT_METHODS.map((p) => (
                 <label

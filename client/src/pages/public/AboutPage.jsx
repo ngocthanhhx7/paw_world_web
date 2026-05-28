@@ -42,7 +42,7 @@ export default function AboutPage() {
           </div>
 
           <div className="order-1 mx-auto max-w-[500px] text-center lg:order-2 lg:ml-auto lg:mr-0 lg:text-right">
-            <h1 className="font-display text-6xl leading-[0.88] tracking-normal text-[#39105E] md:text-[82px]">
+            <h1 className="text-6xl leading-[0.88] tracking-normal text-[#39105E] md:text-[82px]">
               Về
               <br />
               PawWorld
@@ -60,7 +60,7 @@ export default function AboutPage() {
 
       <section className="bg-[#75CCA4] text-white">
         <div className="container-paw grid min-h-[320px] items-start gap-8 py-16 md:grid-cols-[220px_1fr] lg:grid-cols-[260px_1fr] lg:py-20">
-          <h2 className="font-display text-5xl leading-none tracking-normal text-white md:text-[54px]">
+          <h2 className="text-5xl leading-none tracking-normal text-white md:text-[54px]">
             GIÁ TRỊ
           </h2>
           <SectionCopy className="max-w-[780px]">
@@ -83,7 +83,7 @@ export default function AboutPage() {
         style={{ backgroundImage: "url('/assets/Backgrounds/Frame 1321314346.png')" }}
       >
         <div className="container-paw grid min-h-[320px] items-start gap-8 py-16 md:grid-cols-[220px_1fr] lg:grid-cols-[260px_1fr] lg:py-20">
-          <h2 className="font-display text-5xl leading-none tracking-normal text-[#39105E] md:text-[54px]">
+          <h2 className="text-5xl leading-none tracking-normal text-[#39105E] md:text-[54px]">
             MỤC TIÊU
           </h2>
           <SectionCopy className="max-w-[760px] text-[#2B1745]">
@@ -101,7 +101,7 @@ export default function AboutPage() {
       </section>
 
       <section className="bg-white pt-20">
-        <h2 className="px-4 text-center font-display text-5xl leading-none tracking-normal text-[#252020] md:text-[56px]">
+        <h2 className="px-4 text-center text-5xl leading-none tracking-normal text-[#252020] md:text-[56px]">
           GẶP GỠ NGƯỜI SÁNG LẬP
         </h2>
 
@@ -153,7 +153,7 @@ export default function AboutPage() {
           </div>
 
           <div className="mx-auto max-w-[470px] lg:mx-0">
-            <h2 className="font-display text-5xl leading-[0.9] tracking-normal text-[#39105E] md:text-[58px]">
+            <h2 className="text-5xl leading-[0.9] tracking-normal text-[#39105E] md:text-[58px]">
               Khoa học
               <br />
               dinh dưỡng
@@ -176,7 +176,7 @@ export default function AboutPage() {
 
       <section className="bg-white pb-20">
         <div className="container-paw">
-          <h2 className="text-center font-display text-4xl leading-tight tracking-normal text-[#252020] md:text-[52px]">
+          <h2 className="text-center text-4xl leading-tight tracking-normal text-[#252020] md:text-[52px]">
             Các thương hiệu mà Paw World đồng hành
           </h2>
         </div>

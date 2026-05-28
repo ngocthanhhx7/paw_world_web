@@ -26,7 +26,7 @@ export default function OrderSuccessPage() {
     <div className="container-paw py-14">
       <div className="card max-w-2xl mx-auto p-8 text-center">
         <CheckCircle2 size={64} className="text-leaf-500 mx-auto" />
-        <h1 className="font-display text-3xl mt-3 text-cocoa-700">Đặt hàng thành công!</h1>
+        <h1 className="text-3xl mt-3 text-cocoa-700">Đặt hàng thành công!</h1>
         <p className="text-cocoa-400 mt-2">
           Cảm ơn bạn đã mua sắm tại Paw World. Đội ngũ sẽ liên hệ xác nhận đơn trong vòng 30 phút.
         </p>

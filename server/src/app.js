@@ -22,6 +22,10 @@ const adminStatRoutes = require('./routes/admin/stat.admin.routes');
 
 const app = express();
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 /* ----------------------------- Global middleware ---------------------------- */
 app.use(
   helmet({
@@ -30,7 +34,9 @@ app.use(
 );
 app.use(
   cors({
-    origin: (process.env.CLIENT_ORIGIN || 'http://localhost:5173').split(','),
+    origin: (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+      .split(',')
+      .map((origin) => origin.trim()),
     credentials: true,
   }),
 );

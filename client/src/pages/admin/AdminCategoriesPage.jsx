@@ -53,7 +53,7 @@ export default function AdminCategoriesPage() {
     <div className="space-y-6">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="font-display text-3xl text-cocoa-700">Danh mục sản phẩm</h1>
+          <h1 className="text-3xl text-cocoa-700">Danh mục sản phẩm</h1>
           <p className="text-sm text-cocoa-400 mt-1">Tổng {items.length} danh mục</p>
         </div>
         <button onClick={() => setEditing({ ...EMPTY })} className="btn-primary">
@@ -113,7 +113,7 @@ export default function AdminCategoriesPage() {
         <div className="fixed inset-0 z-50 bg-cocoa-700/50 flex items-center justify-center p-4">
           <form onSubmit={handleSubmit} className="card w-full max-w-md p-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl text-cocoa-700">
+              <h2 className="text-2xl text-cocoa-700">
                 {editing._id ? 'Sửa danh mục' : 'Thêm danh mục'}
               </h2>
               <button

@@ -27,7 +27,7 @@ export default function ContactRequestPage() {
     <div className="container-paw py-10 grid lg:grid-cols-[1fr_1.2fr] gap-10 items-start">
       <section>
         <span className="badge bg-cream-500 text-cocoa-700">Tư vấn miễn phí</span>
-        <h1 className="font-display text-3xl md:text-4xl mt-3 text-cocoa-700">
+        <h1 className="text-3xl md:text-4xl mt-3 text-cocoa-700">
           Để Paw World gọi cho bạn
         </h1>
         <p className="text-cocoa-400 mt-3 leading-relaxed">
@@ -67,7 +67,7 @@ export default function ContactRequestPage() {
       </section>
 
       <section className="card p-6 md:p-8">
-        <h2 className="font-display text-2xl text-cocoa-700 inline-flex items-center gap-2">
+        <h2 className="text-2xl text-cocoa-700 inline-flex items-center gap-2">
           <MessageCircle size={22} /> Để lại thông tin liên hệ
         </h2>
         <p className="text-sm text-cocoa-400 mt-1">

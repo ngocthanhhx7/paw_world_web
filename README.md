@@ -69,7 +69,7 @@ Khách hàng **không cần đăng nhập** vẫn mua được hàng — giỏ h
 
 - React 18 + Vite
 - React Router v6
-- TailwindCSS (+ font `FC-DK-Cool-Crayon` cho heading)
+- TailwindCSS (+ font `FC-DK-Cool-Crayon` cho H1/H2, `Nunito` cho phần còn lại)
 - Zustand (state nhẹ cho giỏ hàng + auth admin)
 - Axios (gọi API)
 - React Hot Toast (thông báo)

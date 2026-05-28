@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
           <img src="/assets/logo/ngang.png" alt="Paw World" className="h-12 brightness-0 invert" />
         </Link>
         <div>
-          <h2 className="font-display text-4xl text-cream-50 leading-tight">
+          <h2 className="text-4xl text-cream-50 leading-tight">
             Trang quản trị <br /> Paw World
           </h2>
           <p className="text-cream-100/80 mt-3 max-w-sm">
@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
 
       <div className="flex items-center justify-center p-6">
         <div className="card w-full max-w-md p-8">
-          <h1 className="font-display text-3xl text-cocoa-700">Đăng nhập admin</h1>
+          <h1 className="text-3xl text-cocoa-700">Đăng nhập admin</h1>
           <p className="text-sm text-cocoa-400 mt-1">
             Sử dụng tài khoản được Paw World cấp để vào hệ thống.
           </p>

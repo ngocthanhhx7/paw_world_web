@@ -142,7 +142,7 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl text-cocoa-700">Sản phẩm</h1>
+          <h1 className="text-3xl text-cocoa-700">Sản phẩm</h1>
           <p className="text-sm text-cocoa-400 mt-1">Quản lý {items.length} sản phẩm</p>
         </div>
         <div className="flex gap-2">
@@ -261,7 +261,7 @@ export default function AdminProductsPage() {
             className="card w-full max-w-2xl max-h-[90vh] overflow-auto p-6"
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl text-cocoa-700">
+              <h2 className="text-2xl text-cocoa-700">
                 {editing._id ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm'}
               </h2>
               <button

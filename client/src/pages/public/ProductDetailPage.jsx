@@ -183,7 +183,7 @@ export default function ProductDetailPage() {
           >
             <ArrowLeft size={18} />
           </button>
-          <h1 className="font-display text-2xl md:text-3xl text-sun-500">Chi tiết Kit</h1>
+          <h1 className="text-2xl md:text-3xl text-sun-500">Chi tiết Kit</h1>
         </div>
       </div>
 
@@ -210,7 +210,7 @@ export default function ProductDetailPage() {
 
           {/* Info */}
           <div>
-            <h2 className="font-display text-3xl md:text-5xl text-cocoa-500 leading-tight">
+            <h2 className="text-3xl md:text-5xl text-cocoa-500 leading-tight">
               {product.name}
             </h2>
             <p className="text-sm text-cocoa-400 mt-3">{subtitle}</p>

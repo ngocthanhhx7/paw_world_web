@@ -61,7 +61,7 @@ export default function AdminLeadsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl text-cocoa-700">Khách hàng cần liên hệ</h1>
+          <h1 className="text-3xl text-cocoa-700">Khách hàng cần liên hệ</h1>
           <p className="text-sm text-cocoa-400 mt-1">
             Danh sách khách để lại số điện thoại để được tư vấn / mua hàng.
           </p>

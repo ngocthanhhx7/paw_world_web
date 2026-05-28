@@ -77,8 +77,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"FC DK Cool Crayon"', '"Patrick Hand"', '"Baloo 2"', 'cursive'],
-        sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+        display: ['"Nunito"', 'system-ui', 'sans-serif'],
+        sans: ['"Nunito"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         soft: '0 18px 35px -18px rgba(63, 42, 107, 0.35)',

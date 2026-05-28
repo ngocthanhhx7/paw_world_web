@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="font-display text-3xl text-cocoa-700">Tổng quan</h1>
+          <h1 className="text-3xl text-cocoa-700">Tổng quan</h1>
           <p className="text-sm text-cocoa-400 mt-1">Số liệu thời gian thực của Paw World</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
       {/* Top products */}
       <div className="card p-6">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl text-cocoa-700">Top sản phẩm</h2>
+          <h2 className="text-xl text-cocoa-700">Top sản phẩm</h2>
           <Link
             to="/admin/products"
             className="text-sm text-cream-700 font-semibold hover:underline"

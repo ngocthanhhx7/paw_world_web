@@ -10,6 +10,134 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-ExtraLightItalic.ttf') format('truetype');
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-LightItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-ExtraBoldItalic.ttf') format('truetype');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/Nunito-BlackItalic.ttf') format('truetype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 @layer base {
   html,
   body,
@@ -19,13 +147,18 @@
 
   body {
     @apply bg-cream-50 text-cocoa-500 font-sans antialiased;
+    overflow-x: hidden;
   }
 
   h1,
-  h2,
+  h2 {
+    font-family: 'FC DK Cool Crayon', cursive;
+    @apply tracking-wide text-cocoa-500;
+  }
+
   h3,
   .heading {
-    @apply font-display tracking-wide text-cocoa-500;
+    @apply font-extrabold tracking-normal text-cocoa-500;
   }
 }
 
@@ -78,6 +211,13 @@
     @apply text-sun-500;
   }
 
+  /* Crayon-styled headings (matches Figma title font) */
+  .crayon {
+    font-family: 'FC DK Cool Crayon', cursive;
+    @apply text-[#3F2A6B];
+    letter-spacing: 0.01em;
+  }
+
   /* "Sticker" tape decoration for testimonials */
   .tape {
     @apply absolute h-5 w-20 rounded-sm rotate-[-8deg];
@@ -89,6 +229,32 @@
       transparent 8px
     );
   }
+
+  /* Washi tape patterns – scrapbook style */
+  .tape-washi {
+    @apply relative rounded-[2px] shadow-sm;
+    background-repeat: repeat;
+    background-size: auto 100%;
+  }
+  .tape-cat {
+    background-color: #b8b1c9;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><g><circle cx='15' cy='16' r='7' fill='%23FFFFFF'/><circle cx='12' cy='15' r='1' fill='%23252020'/><circle cx='18' cy='15' r='1' fill='%23252020'/><path d='M9 9 L11 14 L7 14 Z' fill='%23FFFFFF'/><path d='M21 9 L19 14 L23 14 Z' fill='%23FFFFFF'/><circle cx='6' cy='6' r='1.2' fill='%23FFE680'/><circle cx='24' cy='24' r='1.2' fill='%23FFE680'/></g></svg>");
+  }
+  .tape-heart {
+    background-color: #ffd0d5;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><path fill='%23FF6477' d='M14 22 L5 13 C2.5 10.5 4.5 6 8 6 C10.5 6 12.5 7.5 14 10 C15.5 7.5 17.5 6 20 6 C23.5 6 25.5 10.5 23 13 Z'/></svg>");
+  }
+  .tape-lemon {
+    background-color: #ffe89a;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><g><ellipse cx='14' cy='14' rx='8' ry='5' fill='%23FFB800'/><path d='M6 14 Q14 10 22 14' stroke='%23E59C00' stroke-width='0.8' fill='none'/></g></svg>");
+  }
+}
+
+/* Paw print decoration (greyish illustration) */
+.paw-deco {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='%23C9C2BB'><ellipse cx='30' cy='40' rx='14' ry='12'/><ellipse cx='14' cy='22' rx='5' ry='7'/><ellipse cx='46' cy='22' rx='5' ry='7'/><ellipse cx='8' cy='38' rx='4' ry='5.5'/><ellipse cx='52' cy='38' rx='4' ry='5.5'/></g></svg>");
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
 /* Marquee for brand scroll */

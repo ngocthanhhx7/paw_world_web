@@ -38,7 +38,7 @@ export default function OrderTrackingPage() {
     <div className="container-paw py-12">
       <div className="max-w-2xl mx-auto text-center">
         <Package size={48} className="mx-auto text-cream-700" />
-        <h1 className="font-display text-3xl md:text-4xl mt-3 text-cocoa-700">Tra cứu đơn hàng</h1>
+        <h1 className="text-3xl md:text-4xl mt-3 text-cocoa-700">Tra cứu đơn hàng</h1>
         <p className="text-cocoa-400 mt-2">Nhập mã đơn (ví dụ: PW202612250001)</p>
 
         <form onSubmit={handleSearch} className="card p-2 flex items-center mt-6 max-w-lg mx-auto">
