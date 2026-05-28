@@ -136,60 +136,57 @@ function MealCard({ product, badge }) {
   const price = onSale ? product.salePrice : product.price;
 
   return (
-    <div className="group flex flex-col rounded-[28px] bg-white shadow-[0_8px_24px_-12px_rgba(63,42,107,0.18)] overflow-hidden transition-transform duration-300 hover:-translate-y-1">
-      <Link to={`/san-pham/${product.slug}`} className="block relative">
+    <article className="group mx-auto flex h-full min-h-[548px] w-full max-w-[380px] flex-col rounded-[28px] bg-white p-5 shadow-[0_14px_30px_-18px_rgba(63,42,107,0.28)] transition-transform duration-300 hover:-translate-y-1 sm:p-6">
+      <Link
+        to={`/san-pham/${product.slug}`}
+        className="relative block shrink-0 overflow-hidden rounded-[12px] aspect-square"
+      >
         {badge && (
-          <span className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-md text-[11px] font-extrabold tracking-wider text-white bg-[#7FCBA9]">
+          <span className="absolute left-4 top-4 z-10 rounded-[4px] bg-[#66CC99] px-4 py-1.5 text-[12px] font-extrabold uppercase tracking-[0.03em] text-white">
             {badge}
           </span>
         )}
-        <div
-          className="aspect-[4/3] flex items-center justify-center"
-          style={{ backgroundColor: product.bg || '#F8E8EE' }}
-        >
-          <img
-            src={product.image || '/assets/paw/Cat Food Kit.png'}
-            alt={product.name}
-            onError={(event) => {
-              event.currentTarget.onerror = null;
-              event.currentTarget.src =
-                product.fallbackImage || '/assets/paw/Cat Food Kit.png';
-            }}
-            className="max-h-[88%] max-w-[88%] object-contain group-hover:scale-105 transition-transform duration-500"
-          />
-        </div>
+        <img
+          src={product.image || '/assets/paw/Cat Food Kit.png'}
+          alt={product.name}
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src =
+              product.fallbackImage || '/assets/paw/Cat Food Kit.png';
+          }}
+          className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-[1.03]"
+        />
       </Link>
 
-      <div className="px-6 pt-5 pb-6">
+      <div className="flex flex-1 flex-col pt-6">
         <Link to={`/san-pham/${product.slug}`}>
-          <h3 className="font-extrabold text-[20px] text-[#252020] leading-snug">
+          <h3 className="line-clamp-2 min-h-[56px] text-[22px] font-extrabold leading-[1.25] tracking-normal text-[#252020]">
             {product.name}
           </h3>
         </Link>
-        <p className="text-[14px] text-[#5C4033] mt-2 leading-[1.55] min-h-[44px]">
+        <p className="mt-3 line-clamp-2 min-h-[58px] text-[17px] leading-[1.55] text-[#5C4033]">
           {product.shortDescription || product.description?.slice(0, 80) || ''}
         </p>
 
-        {/* dotted divider */}
         <div
-          className="mt-5 border-t border-dashed border-[#D7CCC4]"
+          className="mt-6 border-t border-dashed border-[#D7CCC4]"
           aria-hidden
         />
 
-        <div className="mt-5 flex items-center justify-between">
-          <span className="font-extrabold text-[22px] text-[#252020]">
+        <div className="mt-auto flex items-center justify-between pt-6">
+          <span className="text-[24px] font-extrabold leading-none text-[#252020]">
             {formatPrice(price)}
           </span>
           <button
             type="button"
-            className="w-11 h-11 rounded-xl bg-[#FFCB2E] hover:bg-[#FFB800] text-[#3F2A6B] flex items-center justify-center transition-colors shadow-[0_4px_0_rgba(63,42,107,0.12)]"
+            className="flex h-[50px] w-[50px] items-center justify-center rounded-[8px] bg-[#FFCB2E] text-white shadow-[0_4px_0_rgba(63,42,107,0.12)] transition-colors hover:bg-[#FFB800]"
             aria-label="Thêm vào giỏ"
           >
-            <ShoppingCart size={18} strokeWidth={2.4} />
+            <ShoppingCart size={23} strokeWidth={2.2} />
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -208,15 +205,12 @@ export default function HomePage() {
   // Fallback when DB chưa có sản phẩm — vẫn hiển thị 3 thẻ mẫu
   const productVisuals = [
     {
-      bg: '#F8C7CE',
       image: '/assets/paw/Cat Food Kit.png',
     },
     {
-      bg: '#FFD94A',
       image: '/assets/paw/image 653.png',
     },
     {
-      bg: '#96DDB3',
       image: '/assets/paw/image 654.png',
     },
   ];
@@ -224,7 +218,6 @@ export default function HomePage() {
   const display = products.length
     ? products.slice(0, 3).map((product, index) => ({
         ...product,
-        bg: product.bg || productVisuals[index]?.bg,
         image: product.image || productVisuals[index]?.image,
         fallbackImage: productVisuals[index]?.image,
       }))
@@ -238,7 +231,6 @@ export default function HomePage() {
           price: 450000,
           image: '/assets/paw/Cat Food Kit.png',
           fallbackImage: '/assets/paw/Cat Food Kit.png',
-          bg: productVisuals[0].bg,
         },
         {
           _id: 'b',
@@ -249,7 +241,6 @@ export default function HomePage() {
           price: 220000,
           image: '/assets/paw/image 653.png',
           fallbackImage: '/assets/paw/image 653.png',
-          bg: productVisuals[1].bg,
         },
         {
           _id: 'c',
@@ -260,7 +251,6 @@ export default function HomePage() {
           price: 510000,
           image: '/assets/paw/image 654.png',
           fallbackImage: '/assets/paw/image 654.png',
-          bg: productVisuals[2].bg,
         },
       ];
 
@@ -433,7 +423,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3 lg:gap-8">
+          <div className="grid grid-cols-1 justify-items-center gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
             {display.map((p, i) => (
               <MealCard key={p._id} product={p} badge={badges[i]} />
             ))}

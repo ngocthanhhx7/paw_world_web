@@ -35,14 +35,14 @@ const DAY_PANELS = [
 ];
 
 const RELATED_CARD_CFG = [
-  { badge: 'BÁN CHẠY NHẤT', badgeColor: 'bg-blush-400', bg: 'bg-blush-200' },
-  { badge: null, badgeColor: '', bg: 'bg-sun-300' },
-  { badge: null, badgeColor: '', bg: 'bg-mint-300' },
+  { badge: 'BÁN CHẠY NHẤT', badgeColor: 'bg-blush-400' },
+  { badge: null, badgeColor: '' },
+  { badge: null, badgeColor: '' },
 ];
 
 /* ----------------------------- Sub component ----------------------------- */
 
-function MealKitCard({ product, badge, badgeColor, bg }) {
+function MealKitCard({ product, badge, badgeColor }) {
   const addToCart = useCartStore((s) => s.addToCart);
   const onSale =
     product.salePrice && product.salePrice > 0 && product.salePrice < product.price;
@@ -64,10 +64,10 @@ function MealKitCard({ product, badge, badgeColor, bg }) {
       to={`/san-pham/${product.slug}`}
       className="group block rounded-3xl bg-white shadow-card overflow-hidden hover:-translate-y-1 transition-transform duration-300"
     >
-      <div className={`relative aspect-[4/3] ${bg} flex items-center justify-center`}>
+      <div className="relative aspect-square overflow-hidden">
         {badge && (
           <span
-            className={`absolute top-4 left-4 px-3 py-1 rounded-md text-[11px] font-bold tracking-wider text-white ${badgeColor}`}
+            className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-md text-[11px] font-bold tracking-wider text-white ${badgeColor}`}
           >
             {badge}
           </span>
@@ -75,7 +75,7 @@ function MealKitCard({ product, badge, badgeColor, bg }) {
         <img
           src={product.image || '/assets/paw/Cat Food Kit.png'}
           alt={product.name}
-          className="max-h-[80%] object-contain group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-500"
         />
       </div>
       <div className="p-5">
@@ -349,7 +349,6 @@ export default function ProductDetailPage() {
                 product={p}
                 badge={RELATED_CARD_CFG[i % 3].badge}
                 badgeColor={RELATED_CARD_CFG[i % 3].badgeColor}
-                bg={RELATED_CARD_CFG[i % 3].bg}
               />
             ))}
           </div>

@@ -31,10 +31,14 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-lavender-100">
-      <div className="container-paw flex items-center justify-between gap-6 py-4">
+      <div className="container-paw flex items-center justify-between gap-3 py-4 md:gap-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src="/assets/logo/ngang.png" alt="PawWorld" className="h-9 md:h-10" />
+        <Link to="/" className="flex min-w-0 items-center gap-2">
+          <img
+            src="/assets/logo/ngang.png"
+            alt="PawWorld"
+            className="h-8 w-auto max-w-[168px] md:h-10 md:max-w-none"
+          />
         </Link>
 
         {/* Desktop nav */}
@@ -57,7 +61,7 @@ export default function Header() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 md:gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 md:gap-2">
           {searchOpen ? (
             <form
               onSubmit={handleSearch}
@@ -76,7 +80,7 @@ export default function Header() {
           ) : (
             <button
               onClick={() => setSearchOpen(true)}
-              className="w-10 h-10 rounded-full hover:bg-lavender-50 flex items-center justify-center text-cocoa-500"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-cocoa-500 hover:bg-lavender-50 md:h-10 md:w-10"
               aria-label="Tìm kiếm"
             >
               <Search size={20} />
@@ -85,7 +89,7 @@ export default function Header() {
 
           <Link
             to="/gio-hang"
-            className="relative w-10 h-10 rounded-full hover:bg-lavender-50 flex items-center justify-center text-cocoa-500"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-cocoa-500 hover:bg-lavender-50 md:h-10 md:w-10"
             aria-label="Giỏ hàng"
           >
             <ShoppingBag size={20} />
@@ -97,7 +101,7 @@ export default function Header() {
           </Link>
 
           <button
-            className="lg:hidden w-10 h-10 rounded-full hover:bg-lavender-50 flex items-center justify-center text-cocoa-500"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-cocoa-500 hover:bg-lavender-50 md:h-10 md:w-10 lg:hidden"
             onClick={() => setOpen((o) => !o)}
             aria-label="Menu"
           >

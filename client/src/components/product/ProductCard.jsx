@@ -28,11 +28,11 @@ export default function ProductCard({ product }) {
       to={`/san-pham/${product.slug}`}
       className="group card hover:-translate-y-1 transition-transform duration-300 flex flex-col"
     >
-      <div className="relative aspect-square bg-cream-100 overflow-hidden">
+      <div className="relative aspect-square overflow-hidden">
         <img
           src={product.image || '/assets/paw/Cat Food Kit.png'}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
         {onSale && <span className="badge-sale absolute top-3 left-3">-{discountPct}%</span>}
