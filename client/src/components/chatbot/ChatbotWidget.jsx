@@ -457,7 +457,7 @@ export default function ChatbotWidget() {
           <img src="/assets/icon/khac/iconChatbot.svg" alt="" className="h-12 w-12" />
         </button>
       ) : (
-        <section className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-h-[calc(100vh-24px)] w-[calc(100%-24px)] max-w-[375px] flex-col overflow-hidden rounded-[28px] border border-lavender-100 bg-[#FCFAFF] shadow-[0_24px_70px_-28px_rgba(63,42,107,0.55)] sm:bottom-5 sm:left-auto sm:right-5 sm:max-h-[720px]">
+        <section className="fixed bottom-3 left-3 right-3 z-40 mx-auto flex h-[calc(100vh-24px)] max-h-[620px] w-[calc(100%-24px)] max-w-[375px] flex-col overflow-hidden rounded-[28px] border border-lavender-100 bg-[#FCFAFF] shadow-[0_24px_70px_-28px_rgba(63,42,107,0.55)] sm:bottom-5 sm:left-auto sm:right-5 sm:h-[calc(100vh-40px)] sm:max-h-[620px]">
           <header className="flex items-center justify-between bg-[#F2E2FF] px-5 py-4 border-b border-lavender-100/50">
             <div className="flex items-center gap-2">
               <img src="/assets/logo/doc.svg" alt="PawWorld Logo" className="h-7 w-auto" />
