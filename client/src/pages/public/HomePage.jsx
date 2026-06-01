@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   Banknote,
   Clock3,
@@ -10,7 +11,9 @@ import {
 } from 'lucide-react';
 
 import { productApi } from '@/api/endpoints';
+import { useCartStore } from '@/store/cartStore';
 import { formatPrice } from '@/utils/format';
+import { getMealProductCartId } from './homePageProducts';
 
 /* ----------------------------- Static content ----------------------------- */
 
@@ -131,9 +134,29 @@ function PainCard({ pain }) {
 }
 
 function MealCard({ product, badge }) {
+  const [adding, setAdding] = useState(false);
+  const addToCart = useCartStore((s) => s.addToCart);
   const onSale =
     product.salePrice && product.salePrice > 0 && product.salePrice < product.price;
   const price = onSale ? product.salePrice : product.price;
+  const cartProductId = getMealProductCartId(product);
+
+  const handleAdd = async () => {
+    if (!cartProductId) {
+      toast.error('San pham mau, vui long chon san pham trong danh muc');
+      return;
+    }
+
+    setAdding(true);
+    try {
+      await addToCart(cartProductId, 1);
+      toast.success('Da them vao gio hang');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Khong them duoc san pham');
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <article className="group mx-auto flex h-full min-h-[548px] w-full max-w-[380px] flex-col rounded-[28px] bg-white p-5 shadow-[0_14px_30px_-18px_rgba(63,42,107,0.28)] transition-transform duration-300 hover:-translate-y-1 sm:p-6">
@@ -179,6 +202,9 @@ function MealCard({ product, badge }) {
           </span>
           <button
             type="button"
+            onClick={handleAdd}
+            disabled={adding}
+            aria-busy={adding}
             className="flex h-[50px] w-[50px] items-center justify-center rounded-[8px] bg-[#FFCB2E] text-white shadow-[0_4px_0_rgba(63,42,107,0.12)] transition-colors hover:bg-[#FFB800]"
             aria-label="Thêm vào giỏ"
           >
