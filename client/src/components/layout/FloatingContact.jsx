@@ -9,7 +9,7 @@ export default function FloatingContact() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-30 flex flex-col gap-3">
+    <div className="fixed bottom-24 right-5 z-30 flex flex-col gap-3 sm:bottom-5 sm:right-24 lg:right-28">
       <Link
         to="/lien-he-tu-van"
         className="flex items-center gap-2 bg-cream-500 text-cocoa-700 px-4 py-3 rounded-full shadow-soft font-semibold hover:-translate-y-0.5 transition"
