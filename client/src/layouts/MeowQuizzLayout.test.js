@@ -1,0 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+const source = readFileSync(new URL('./MeowQuizzLayout.jsx', import.meta.url), 'utf8');
+
+test('MeowQuizzLayout renders the shared screenshot stepper shell', () => {
+  assert.match(source, /meow-shell-stepper/);
+  assert.match(source, /Thú cưng của bạn/);
+  assert.match(source, /Thực đơn/);
+  assert.match(source, /Đặt hàng/);
+  assert.match(source, /assets\/logo\/ngang\.png/);
+  assert.doesNotMatch(source, /ChatbotWidget/);
+});
