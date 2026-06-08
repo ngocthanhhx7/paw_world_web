@@ -1,12 +1,12 @@
 ﻿export const initialQuizForm = {
   name: '',
-  sex: 'male',
-  ageYears: '1',
-  ageMonths: '0',
+  sex: '',
+  ageYears: '',
+  ageMonths: '',
   breed: '',
-  weightKg: 4.5,
-  allergies: '',
+  weightKg: '',
   noAllergies: false,
+  allergies: '',
   healthIssues: '',
   healthGoals: [],
   activityLevel: '',
@@ -17,10 +17,10 @@
 };
 
 export const healthGoalOptions = [
-  { value: 'bone', label: 'Xương', icon: '♨' },
-  { value: 'skin_coat', label: 'Da và lông', icon: '●' },
-  { value: 'teeth', label: 'Răng', icon: '▣' },
-  { value: 'digestion', label: 'Hệ tiêu hóa', icon: '◇' },
+  { value: 'bone', label: 'Xương', icon: '●' },
+  { value: 'skin_coat', label: 'Da và lông', icon: '◌' },
+  { value: 'teeth', label: 'Răng', icon: '◐' },
+  { value: 'digestion', label: 'Hệ tiêu hóa', icon: '◍' },
 ];
 
 export const activityOptions = [
@@ -65,4 +65,16 @@ export function profileAgeLabel(profile) {
   const months = Number(profile?.ageMonths || 0);
   if (!years && !months) return 'Chưa rõ tuổi';
   return `${years} tuổi ${months} tháng`;
+}
+
+export function mapProfileToForm(profile) {
+  return {
+    ...initialQuizForm,
+    ...profile,
+    allergies: Array.isArray(profile?.allergies) ? profile.allergies.join(', ') : String(profile?.allergies || ''),
+    healthIssues: Array.isArray(profile?.healthIssues) ? profile.healthIssues.join(', ') : String(profile?.healthIssues || ''),
+    favoriteFlavors: Array.isArray(profile?.favoriteFlavors) ? profile.favoriteFlavors.join(', ') : String(profile?.favoriteFlavors || ''),
+    healthGoals: Array.isArray(profile?.healthGoals) ? profile.healthGoals : [],
+    noAllergies: Boolean(profile?.noAllergies),
+  };
 }

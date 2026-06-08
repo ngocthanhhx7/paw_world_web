@@ -49,6 +49,8 @@ export const petProfileApi = {
   list: () => api.get('/customer/pet-profiles').then((r) => r.data),
   get: (id) => api.get(`/customer/pet-profiles/${id}`).then((r) => r.data),
   create: (payload) => api.post('/customer/pet-profiles', payload).then((r) => r.data),
+  uploadPhoto: (formData) =>
+    api.post('/customer/pet-profiles/upload-photo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
   update: (id, payload) => api.put(`/customer/pet-profiles/${id}`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/customer/pet-profiles/${id}`).then((r) => r.data),
   recommend: (id) => api.post(`/customer/pet-profiles/${id}/recommendation`).then((r) => r.data),

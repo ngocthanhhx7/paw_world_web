@@ -18,54 +18,38 @@ export default function ResetPasswordPage() {
   const submit = async (event) => {
     event.preventDefault();
     if (form.password !== form.confirmPassword) {
-      toast.error('Mat khau xac nhan khong khop');
+      toast.error('Mật khẩu xác nhận không khớp');
       return;
     }
 
     setLoading(true);
     try {
       await resetPassword({ token, password: form.password });
-      toast.success('Da dat lai mat khau');
+      toast.success('Đã đặt lại mật khẩu');
       navigate('/dang-nhap', { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Khong dat lai duoc mat khau');
+      toast.error(err?.response?.data?.message || 'Không đặt lại được mật khẩu');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthShell title={<>Dat lai<br />mat khau</>}>
+    <AuthShell title={<>Đặt lại<br />mật khẩu</>} subtitle="Tạo mật khẩu mới để tiếp tục sử dụng tài khoản PawWorld.">
       <form onSubmit={submit} className="space-y-5">
         <div>
-          <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">
-            Mat khau moi
-          </label>
-          <PasswordInput
-            value={form.password}
-            show={showPassword}
-            onToggle={() => setShowPassword((value) => !value)}
-            onChange={(password) => setForm((value) => ({ ...value, password }))}
-          />
+          <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">Mật khẩu mới</label>
+          <PasswordInput value={form.password} show={showPassword} onToggle={() => setShowPassword((value) => !value)} onChange={(password) => setForm((value) => ({ ...value, password }))} />
         </div>
         <div>
-          <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">
-            Xac nhan mat khau
-          </label>
-          <PasswordInput
-            value={form.confirmPassword}
-            show={showConfirm}
-            onToggle={() => setShowConfirm((value) => !value)}
-            onChange={(confirmPassword) => setForm((value) => ({ ...value, confirmPassword }))}
-          />
+          <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">Xác nhận mật khẩu</label>
+          <PasswordInput value={form.confirmPassword} show={showConfirm} onToggle={() => setShowConfirm((value) => !value)} onChange={(confirmPassword) => setForm((value) => ({ ...value, confirmPassword }))} />
         </div>
-        <PrimaryButton loading={loading}>Luu mat khau</PrimaryButton>
+        <PrimaryButton loading={loading}>Lưu mật khẩu</PrimaryButton>
       </form>
 
       <p className="mt-7 text-center text-[12px] font-semibold text-[#6c5d50]">
-        <Link className="font-extrabold uppercase text-[#a95620] underline" to="/dang-nhap">
-          Quay lai dang nhap
-        </Link>
+        <Link className="font-extrabold uppercase text-[#a95620] underline" to="/dang-nhap">Quay lại đăng nhập</Link>
       </p>
     </AuthShell>
   );

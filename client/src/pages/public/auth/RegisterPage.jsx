@@ -20,57 +20,35 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form);
-      toast.success('Dang ky thanh cong');
+      toast.success('Đăng ký thành công');
       navigate(redirect, { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Dang ky that bai');
+      toast.error(err?.response?.data?.message || 'Đăng ký thất bại');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthShell title={<>Chao mung<br />ban nhe</>}>
+    <AuthShell title={<>Chào mừng<br />bạn nhé</>} subtitle="Tạo tài khoản để PawWorld lưu hồ sơ mèo và đồng bộ đơn hàng của bạn.">
       <form onSubmit={submit} className="space-y-4">
-        <AuthInput
-          label="Ho va ten"
-          placeholder="Nguyen Con Sen"
-          value={form.fullName}
-          onChange={(fullName) => setForm((value) => ({ ...value, fullName }))}
-        />
-        <AuthInput
-          label="Dia chi email"
-          type="email"
-          placeholder="hello@pawworld.com"
-          value={form.email}
-          onChange={(email) => setForm((value) => ({ ...value, email }))}
-        />
+        <AuthInput label="Họ và tên" placeholder="Nguyễn Con Sen" value={form.fullName} onChange={(fullName) => setForm((value) => ({ ...value, fullName }))} />
+        <AuthInput label="Địa chỉ email" type="email" placeholder="hello@pawworld.com" value={form.email} onChange={(email) => setForm((value) => ({ ...value, email }))} />
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">
-              Mat khau
-            </label>
-            <Link to="/quen-mat-khau" className="text-[11px] font-extrabold text-[#a95620] underline">
-              Quen mat khau?
-            </Link>
+            <label className="text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">Mật khẩu</label>
+            <Link to="/quen-mat-khau" className="text-[11px] font-extrabold text-[#a95620] underline">Quên mật khẩu?</Link>
           </div>
-          <PasswordInput
-            value={form.password}
-            show={showPassword}
-            onToggle={() => setShowPassword((value) => !value)}
-            onChange={(password) => setForm((value) => ({ ...value, password }))}
-          />
+          <PasswordInput value={form.password} show={showPassword} onToggle={() => setShowPassword((value) => !value)} onChange={(password) => setForm((value) => ({ ...value, password }))} />
         </div>
-        <PrimaryButton loading={loading}>Dang ky</PrimaryButton>
+        <PrimaryButton loading={loading}>Đăng ký</PrimaryButton>
       </form>
 
       <SocialButtons />
 
       <p className="mt-7 text-center text-[12px] font-semibold text-[#6c5d50]">
-        Ban da co tai khoan?{' '}
-        <Link className="font-extrabold uppercase text-[#a95620] underline" to={`/dang-nhap?redirect=${encodeURIComponent(redirect)}`}>
-          Dang nhap
-        </Link>
+        Bạn đã có tài khoản?{' '}
+        <Link className="font-extrabold uppercase text-[#a95620] underline" to={`/dang-nhap?redirect=${encodeURIComponent(redirect)}`}>Đăng nhập</Link>
       </p>
     </AuthShell>
   );

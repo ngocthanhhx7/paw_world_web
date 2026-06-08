@@ -4,7 +4,7 @@ const { streamChatCompletion } = require('./shineshopChat.service');
 const FALLBACK_PRODUCTS = [
   {
     id: 'fallback-dry-digestion',
-    name: 'PawWorld Sensitive Digestion Dry Cat Food',
+    name: 'PawWorld H?t kh? h? tr? ti?u ho? nh?y c?m',
     price: 189000,
     foodType: 'dry',
     flavor: 'salmon',
@@ -13,7 +13,7 @@ const FALLBACK_PRODUCTS = [
   },
   {
     id: 'fallback-wet-skin-coat',
-    name: 'PawWorld Skin & Coat Wet Pate',
+    name: 'PawWorld Pate ??t ch?m da v? l?ng',
     price: 39000,
     foodType: 'wet',
     flavor: 'tuna',
@@ -22,7 +22,7 @@ const FALLBACK_PRODUCTS = [
   },
   {
     id: 'fallback-mixed-bone',
-    name: 'PawWorld Complete Mixed Meal Kit',
+    name: 'PawWorld Meal Kit k?t h?p c?n b?ng',
     price: 249000,
     foodType: 'mixed',
     flavor: 'chicken',
@@ -63,18 +63,18 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
     source,
     petName: profile.name,
     dailyCalories: { min: Math.round(calories * 0.9), max: Math.round(calories * 1.1) },
-    summary: `${profile.name || 'Your cat'} should start with a balanced ${profile.currentFoodType || 'mixed'} plan adjusted gradually over 7 days.`,
+    summary: `${profile.name || 'B? m?o'} n?n b?t ??u v?i combo ${profile.currentFoodType || 'k?t h?p'} c?n b?ng, t?ng chuy?n ??i th?c ?n t? t? trong 7 ng?y ?? h?n ch? r?i lo?n ti?u ho?.`,
     feedingPlan: [
-      'Split meals into 2 to 3 portions per day.',
-      'Introduce new food slowly over one week.',
-      'Keep fresh water available at all times.',
+      'Chia kh?u ph?n th?nh 2-3 b?a m?i ng?y v? ?o b?ng c?c ti?u chu?n.',
+      'Tr?n th?c ?n m?i t?ng d?n trong 7 ng?y, kh?ng ??i kh?u ph?n qu? ??t ng?t.',
+      'Lu?n chu?n b? n??c s?ch v? theo d?i ?i?m th? tr?ng BCS quanh m?c 5/9.',
     ],
-    warnings: profile.noAllergies ? [] : (profile.allergies || []).map((item) => `Avoid ${item}.`),
+    warnings: profile.noAllergies ? [] : (profile.allergies || []).map((item) => `Tr?nh th?nh ph?n: ${item}.`),
     products: products.slice(0, 3).map((product, index) => ({
       productId: product.source === 'db' ? product.id : null,
       fallbackId: product.source === 'fallback' ? product.id : null,
       name: product.name,
-      reason: index === 0 ? 'Best fit for the current profile.' : 'Useful supporting option for variety.',
+      reason: index === 0 ? 'S?n ph?m ch?nh ph? h?p nh?t v?i h? s? hi?n t?i.' : 'S?n ph?m b? tr? gi?p kh?u ph?n ?a d?ng v? d? duy tr?.',
       price: product.price,
       image: product.image || '',
       foodType: product.foodType,
@@ -83,7 +83,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
 }
 
 function buildRecommendationPrompt(profile, products) {
-  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Recommend only products from the provided catalog. Avoid allergens and do not claim to treat disease.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
+  return `B?n l? chuy?n gia dinh d??ng m?o cho PawWorld. Tr? v? duy nh?t JSON h?p l?, kh?ng markdown. H?y t?o combo meal kit c? nh?n ho? b?ng ti?ng Vi?t d?a tr?n h? s? m?o v? ch? ch?n s?n ph?m trong catalog. Kh?ng kh?ng ??nh ?i?u tr? b?nh, kh?ng khuy?n ?? s?ng/x??ng, tr?nh d? ?ng. JSON c?n c?: summary, dailyCalories {min,max}, feedingPlan array, warnings array, products array v?i productId/fallbackId/name/reason/price/image/foodType.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
 }
 
 function extractJson(text) {

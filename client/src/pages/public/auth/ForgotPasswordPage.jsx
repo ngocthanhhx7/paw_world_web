@@ -18,37 +18,25 @@ export default function ForgotPasswordPage() {
     try {
       const data = await forgotPassword({ email });
       setResetUrl(data.resetUrl || '');
-      toast.success(data.message || 'Vui long kiem tra email cua ban');
+      toast.success(data.message || 'Vui lòng kiểm tra email của bạn');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Khong gui duoc yeu cau');
+      toast.error(err?.response?.data?.message || 'Không gửi được yêu cầu');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthShell title={<>Quen<br />mat khau</>}>
+    <AuthShell title={<>Quên<br />mật khẩu</>} subtitle="Nhập email đã đăng ký để nhận liên kết đặt lại mật khẩu.">
       <form onSubmit={submit} className="space-y-5">
-        <AuthInput
-          label="Dia chi email"
-          type="email"
-          placeholder="hello@pawworld.com"
-          value={email}
-          onChange={setEmail}
-        />
-        <PrimaryButton loading={loading}>Gui lien ket</PrimaryButton>
+        <AuthInput label="Địa chỉ email" type="email" placeholder="hello@pawworld.com" value={email} onChange={setEmail} />
+        <PrimaryButton loading={loading}>Gửi liên kết</PrimaryButton>
       </form>
 
-      {resetUrl ? (
-        <Link to={resetUrl} className="mt-5 block text-center text-[12px] font-extrabold text-[#a95620] underline">
-          Mo lien ket dat lai mat khau
-        </Link>
-      ) : null}
+      {resetUrl ? <Link to={resetUrl} className="mt-5 block text-center text-[12px] font-extrabold text-[#a95620] underline">Mở liên kết đặt lại mật khẩu</Link> : null}
 
       <p className="mt-7 text-center text-[12px] font-semibold text-[#6c5d50]">
-        <Link className="font-extrabold uppercase text-[#a95620] underline" to="/dang-nhap">
-          Quay lai dang nhap
-        </Link>
+        <Link className="font-extrabold uppercase text-[#a95620] underline" to="/dang-nhap">Quay lại đăng nhập</Link>
       </p>
     </AuthShell>
   );

@@ -1,6 +1,10 @@
 ﻿const PetProfile = require('../models/PetProfile');
 const { buildRecommendationForProfile } = require('../services/meowRecommendation.service');
 
+function buildImageUrl(req, file) {
+  return `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+}
+
 function buildOwnedProfileQuery(profileId, customerId) {
   return { _id: profileId, customer: customerId };
 }
@@ -44,7 +48,7 @@ async function create(req, res) {
 
 async function get(req, res) {
   const profile = await PetProfile.findOne(buildOwnedProfileQuery(req.params.id, req.customer._id));
-  if (!profile) return res.status(404).json({ message: 'Khong tim thay ho so thu cung' });
+  if (!profile) return res.status(404).json({ message: 'Kh?ng t?m th?y h? s? th? c?ng' });
   return res.json({ profile });
 }
 
@@ -54,14 +58,19 @@ async function update(req, res) {
     normalizeProfilePayload(req.body),
     { new: true, runValidators: true },
   );
-  if (!profile) return res.status(404).json({ message: 'Khong tim thay ho so thu cung' });
+  if (!profile) return res.status(404).json({ message: 'Kh?ng t?m th?y h? s? th? c?ng' });
   return res.json({ profile });
 }
 
 async function remove(req, res) {
   const profile = await PetProfile.findOneAndDelete(buildOwnedProfileQuery(req.params.id, req.customer._id));
-  if (!profile) return res.status(404).json({ message: 'Khong tim thay ho so thu cung' });
-  return res.json({ message: 'Da xoa ho so thu cung' });
+  if (!profile) return res.status(404).json({ message: 'Kh?ng t?m th?y h? s? th? c?ng' });
+  return res.json({ message: '?? xo? h? s? th? c?ng' });
+}
+
+async function uploadPhoto(req, res) {
+  if (!req.file) return res.status(400).json({ message: 'Vui l?ng ch?n ?nh c?a b? m?o' });
+  return res.status(201).json({ photoUrl: buildImageUrl(req, req.file) });
 }
 
 async function recommendation(req, res) {
@@ -78,11 +87,13 @@ async function recommendation(req, res) {
 module.exports = {
   buildOwnedProfileQuery,
   normalizeArray,
+  buildImageUrl,
   normalizeProfilePayload,
   list,
   create,
   get,
   update,
   remove,
+  uploadPhoto,
   recommendation,
 };
