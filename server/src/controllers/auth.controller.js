@@ -10,9 +10,13 @@ function signToken(admin) {
 }
 
 function signCustomerToken(customer) {
-  return jwt.sign({ id: customer._id, type: 'customer' }, process.env.JWT_SECRET, {
+  return jwt.sign(
+    { id: customer._id, type: 'customer', tokenVersion: customer.tokenVersion || 0 },
+    process.env.JWT_SECRET,
+    {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
+    },
+  );
 }
 
 function customerPayload(customer) {
@@ -176,6 +180,7 @@ exports.customerResetPassword = async (req, res) => {
   }
 
   customer.password = password;
+  customer.bumpTokenVersion();
   customer.clearPasswordResetToken();
   await customer.save();
 

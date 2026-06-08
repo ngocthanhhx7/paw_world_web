@@ -43,6 +43,10 @@ async function requireCustomer(req, res, next) {
       return res.status(401).json({ message: 'Tai khoan khong ton tai hoac da bi khoa' });
     }
 
+    if (Number(decoded.tokenVersion || 0) !== Number(customer.tokenVersion || 0)) {
+      return res.status(401).json({ message: 'Token khong hop le hoac da het han' });
+    }
+
     req.customer = customer;
     return next();
   } catch (err) {
@@ -50,4 +54,24 @@ async function requireCustomer(req, res, next) {
   }
 }
 
-module.exports = { requireAdmin, requireCustomer };
+function requireSameOriginJson(req, res, next) {
+  if (!req.is('application/json')) {
+    return res.status(415).json({ message: 'Yeu cau phai su dung JSON' });
+  }
+
+  const origin = req.get('origin');
+  if (!origin) return next();
+
+  const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (!allowedOrigins.includes(origin)) {
+    return res.status(403).json({ message: 'Nguon yeu cau khong hop le' });
+  }
+
+  return next();
+}
+
+module.exports = { requireAdmin, requireCustomer, requireSameOriginJson };

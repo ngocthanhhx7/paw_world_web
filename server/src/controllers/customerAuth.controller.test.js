@@ -7,7 +7,7 @@ process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 const Customer = require('../models/Customer');
 const authController = require('./auth.controller');
-const { requireCustomer } = require('../middlewares/auth');
+const { requireCustomer, requireSameOriginJson } = require('../middlewares/auth');
 
 function createMockRes() {
   return {
@@ -153,6 +153,7 @@ test('customerResetPassword hashes the token, clears reset state, and updates th
     fullName: 'Reset User',
     email: 'reset@example.com',
     password: 'old-password',
+    tokenVersion: 2,
   });
 
   customer.save = async () => customer;
@@ -179,6 +180,7 @@ test('customerResetPassword hashes the token, clears reset state, and updates th
   }
 
   assert.equal(customer.password, 'new-password-123');
+  assert.equal(customer.tokenVersion, 3);
   assert.equal(customer.resetPasswordTokenHash, '');
   assert.equal(customer.resetPasswordExpiresAt, null);
   assert.deepEqual(res.body, { message: 'Da cap nhat mat khau' });
@@ -198,7 +200,7 @@ test('requireCustomer reads paw_customer_token cookie and attaches req.customer'
   jwt.verify = (token, secret) => {
     assert.equal(token, 'signed-token');
     assert.equal(secret, process.env.JWT_SECRET);
-    return { id: 'customer-1', type: 'customer' };
+    return { id: 'customer-1', type: 'customer', tokenVersion: 4 };
   };
 
   Customer.findById = (id) => {
@@ -206,7 +208,7 @@ test('requireCustomer reads paw_customer_token cookie and attaches req.customer'
     return {
       select: async (selection) => {
         assert.equal(selection, '-password');
-        return { _id: 'customer-1', fullName: 'Sen', isActive: true };
+        return { _id: 'customer-1', fullName: 'Sen', isActive: true, tokenVersion: 4 };
       },
     };
   };
@@ -221,5 +223,79 @@ test('requireCustomer reads paw_customer_token cookie and attaches req.customer'
   }
 
   assert.equal(nextCalled, true);
-  assert.deepEqual(req.customer, { _id: 'customer-1', fullName: 'Sen', isActive: true });
+  assert.deepEqual(req.customer, { _id: 'customer-1', fullName: 'Sen', isActive: true, tokenVersion: 4 });
+});
+
+test('requireCustomer rejects stale customer tokens after tokenVersion changes', async () => {
+  const req = {
+    cookies: { paw_customer_token: 'signed-token' },
+  };
+  const res = createMockRes();
+
+  const jwt = require('jsonwebtoken');
+  const originalVerify = jwt.verify;
+  const originalFindById = Customer.findById;
+
+  jwt.verify = () => ({ id: 'customer-1', type: 'customer', tokenVersion: 1 });
+
+  Customer.findById = () => ({
+    select: async () => ({ _id: 'customer-1', isActive: true, tokenVersion: 2 }),
+  });
+
+  try {
+    await requireCustomer(req, res, () => {
+      throw new Error('next should not be called');
+    });
+  } finally {
+    jwt.verify = originalVerify;
+    Customer.findById = originalFindById;
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Token khong hop le hoac da het han' });
+});
+
+test('requireSameOriginJson rejects non-json customer auth requests', () => {
+  const req = {
+    is: () => false,
+    get: () => 'http://localhost:5173',
+  };
+  const res = createMockRes();
+
+  requireSameOriginJson(req, res, () => {
+    throw new Error('next should not be called');
+  });
+
+  assert.equal(res.statusCode, 415);
+  assert.deepEqual(res.body, { message: 'Yeu cau phai su dung JSON' });
+});
+
+test('requireSameOriginJson rejects disallowed origins', () => {
+  const req = {
+    is: (type) => type === 'application/json',
+    get: () => 'https://evil.example',
+  };
+  const res = createMockRes();
+
+  requireSameOriginJson(req, res, () => {
+    throw new Error('next should not be called');
+  });
+
+  assert.equal(res.statusCode, 403);
+  assert.deepEqual(res.body, { message: 'Nguon yeu cau khong hop le' });
+});
+
+test('requireSameOriginJson accepts allowed json requests', () => {
+  const req = {
+    is: (type) => type === 'application/json',
+    get: () => 'http://localhost:5173',
+  };
+  const res = createMockRes();
+  let nextCalled = false;
+
+  requireSameOriginJson(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(nextCalled, true);
 });

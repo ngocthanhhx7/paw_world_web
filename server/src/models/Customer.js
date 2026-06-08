@@ -17,6 +17,7 @@ const customerSchema = new mongoose.Schema(
     phone: { type: String, default: '', trim: true },
     avatar: { type: String, default: '' },
     isActive: { type: Boolean, default: true },
+    tokenVersion: { type: Number, default: 0 },
     emailVerifiedAt: { type: Date, default: null },
     lastLoginAt: { type: Date, default: null },
     resetPasswordTokenHash: { type: String, default: '' },
@@ -46,6 +47,10 @@ customerSchema.methods.createPasswordResetToken = function createPasswordResetTo
 customerSchema.methods.clearPasswordResetToken = function clearPasswordResetToken() {
   this.resetPasswordTokenHash = '';
   this.resetPasswordExpiresAt = null;
+};
+
+customerSchema.methods.bumpTokenVersion = function bumpTokenVersion() {
+  this.tokenVersion = (this.tokenVersion || 0) + 1;
 };
 
 module.exports = mongoose.model('Customer', customerSchema);
