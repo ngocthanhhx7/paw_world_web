@@ -1,4 +1,4 @@
-const Product = require('../models/Product');
+﻿const Product = require('../models/Product');
 const { streamChatCompletion } = require('./shineshopChat.service');
 
 const FALLBACK_PRODUCTS = [
@@ -107,8 +107,11 @@ async function buildRecommendationForProfile(profile, options = {}) {
 
   try {
     let content = '';
-    await stream({ messages: [{ role: 'user', content: buildRecommendationPrompt(plainProfile, catalog) }] }, (token) => {
-      content += token;
+    await stream({
+      messages: [{ role: 'user', content: buildRecommendationPrompt(plainProfile, catalog) }],
+      onToken: (token) => {
+        content += token;
+      },
     });
     return { ...buildDeterministicRecommendation(plainProfile, catalog, 'ai'), ...extractJson(content), source: 'ai' };
   } catch (err) {
@@ -124,3 +127,4 @@ module.exports = {
   buildDeterministicRecommendation,
   buildRecommendationForProfile,
 };
+
