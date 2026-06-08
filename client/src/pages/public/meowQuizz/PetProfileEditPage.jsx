@@ -1,12 +1,41 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { ChevronDown, Edit3, Minus, Plus } from 'lucide-react';
 
 import { petProfileApi } from '@/api/endpoints';
-import { activityOptions, foodTypeOptions, healthGoalOptions, initialQuizForm, mapProfileToForm, normalizeQuizPayload, weightGoalOptions } from './meowQuizData';
+import { activityOptions, foodTypeOptions, initialQuizForm, mapProfileToForm, normalizeQuizPayload, weightGoalOptions } from './meowQuizData';
+
+const fallbackCat = '/assets/cat/image 652.png';
+const allergyOptions = ['Không có', 'Cá', 'Bò', 'Thỏ', 'Đậu nành', 'Gluten', 'Lúa mì', 'Trứng', 'Ngô (Bắp)', 'Sữa', 'Dị ứng môi trường'];
+
+function Field({ label, children }) {
+  return <label className="relative block"><span className="absolute -top-2 left-4 bg-[#fffefa] px-1 text-xs font-medium text-[#9a96a4]">{label}</span>{children}</label>;
+}
 
 function Input(props) {
-  return <input {...props} className="h-13 w-full rounded-[16px] border border-[#eadff8] px-4 text-sm font-semibold outline-none focus:border-[#c69bed]" />;
+  return <input {...props} className="h-[50px] w-full rounded-[10px] border border-[#cfd5e0] bg-white px-4 text-base font-medium text-[#27232e] outline-none focus:border-[#b9bfff]" />;
+}
+
+function Select({ value, onChange, options }) {
+  return (
+    <div className="relative">
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="h-[50px] w-full appearance-none rounded-[10px] border border-[#cfd5e0] bg-white px-4 text-base font-medium text-[#27232e] outline-none focus:border-[#b9bfff]">
+        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7a7684]" size={18} />
+    </div>
+  );
+}
+
+function WeightControl({ value, onChange }) {
+  const current = Number(value || 0);
+  const change = (delta) => onChange(Math.max(0.5, Math.round((current + delta) * 10) / 10));
+  return <div className="flex h-[50px] items-center justify-between rounded-[10px] border border-[#cfd5e0] bg-white px-4"><button type="button" onClick={() => change(-0.1)}><Minus size={18} /></button><span className="font-bold">{String(current || 0).replace('.', ',')} kg</span><button type="button" onClick={() => change(0.1)}><Plus size={18} /></button></div>;
+}
+
+function AllergyBox({ label, checked, onClick }) {
+  return <button type="button" onClick={onClick} className={checked ? 'flex h-[58px] items-center gap-4 rounded-[10px] border-2 border-[#ff650f] bg-[#fffefa] px-4 text-left text-base font-semibold' : 'flex h-[58px] items-center gap-4 rounded-[10px] border border-[#cfd5e0] bg-white px-4 text-left text-base font-semibold'}><span className={checked ? 'grid h-5 w-5 place-items-center rounded-[4px] bg-[#ff650f] text-xs text-white' : 'h-5 w-5 rounded-[4px] border border-[#cfd5e0]'}>{checked ? '✓' : ''}</span>{label}</button>;
 }
 
 export default function PetProfileEditPage() {
@@ -17,15 +46,22 @@ export default function PetProfileEditPage() {
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 
   useEffect(() => {
-    petProfileApi.get(id)
-      .then((data) => setForm(mapProfileToForm(data.profile)))
-      .catch(() => {
-        toast.error('Không tìm thấy hồ sơ');
-        navigate('/meow-quizz/ho-so');
-      });
+    petProfileApi.get(id).then((data) => setForm(mapProfileToForm(data.profile))).catch(() => {
+      toast.error('Không tìm thấy hồ sơ');
+      navigate('/meow-quizz/ho-so');
+    });
   }, [id, navigate]);
 
-  const toggleGoal = (value) => update({ healthGoals: form.healthGoals.includes(value) ? form.healthGoals.filter((item) => item !== value) : [...form.healthGoals, value] });
+  const selectedAllergies = String(form.allergies || '').split(',').map((item) => item.trim()).filter(Boolean);
+  const toggleAllergy = (label) => {
+    if (label === 'Không có') {
+      update({ noAllergies: true, allergies: '' });
+      return;
+    }
+    const next = selectedAllergies.includes(label) ? selectedAllergies.filter((item) => item !== label) : [...selectedAllergies, label];
+    update({ noAllergies: false, allergies: next.join(', ') });
+  };
+
   const save = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -41,28 +77,17 @@ export default function PetProfileEditPage() {
   };
 
   return (
-    <section className="bg-[#f4e9ff] px-4 py-10 text-[#4b3a62]">
-      <form onSubmit={save} className="mx-auto max-w-4xl rounded-[32px] bg-white p-6 shadow-[0_18px_0_rgba(94,62,130,0.08)] sm:p-9">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#d29a28]">Hồ sơ thú cưng</p>
-        <h1 className="mt-2 text-4xl font-black text-[#4d2b63]">Chỉnh sửa thông tin</h1>
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
-          <label className="space-y-2 text-sm font-bold">Tên bé<Input value={form.name} onChange={(e) => update({ name: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold">Giống mèo<Input value={form.breed} onChange={(e) => update({ breed: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold">Năm<Input type="number" min="0" value={form.ageYears} onChange={(e) => update({ ageYears: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold">Tháng<Input type="number" min="0" max="11" value={form.ageMonths} onChange={(e) => update({ ageMonths: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold">Cân nặng<Input type="number" min="0" step="0.1" value={form.weightKg} onChange={(e) => update({ weightKg: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold">Dị ứng<Input value={form.allergies} onChange={(e) => update({ allergies: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold md:col-span-2">Vấn đề sức khỏe<Input value={form.healthIssues} onChange={(e) => update({ healthIssues: e.target.value })} /></label>
-          <label className="space-y-2 text-sm font-bold md:col-span-2">Vị ưa thích<Input value={form.favoriteFlavors} onChange={(e) => update({ favoriteFlavors: e.target.value })} /></label>
+    <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] pb-28 pt-10 text-[#25222b]">
+      <form onSubmit={save} className="mx-auto max-w-[624px] px-4">
+        <h1 className="crayon text-center text-[52px] leading-none text-[#222027]">Chỉnh sửa hồ sơ</h1>
+        <div className="relative mx-auto mt-12 h-[126px] w-[126px]"><img src={form.photoUrl || fallbackCat} alt={form.name || 'Bé mèo'} className="h-full w-full rounded-full border-4 border-white object-cover shadow-sm" /><button type="button" className="absolute left-[-10px] top-0 grid h-9 w-9 place-items-center rounded-full border-2 border-white bg-[#f15916] text-white shadow-md"><Edit3 size={16} /></button></div>
+        <div className="mt-10 space-y-11">
+          <Field label="Tên"><Input value={form.name} onChange={(event) => update({ name: event.target.value })} /></Field>
+          <section><h2 className="mb-5 text-[22px] font-extrabold">Thông tin chung</h2><div className="space-y-4"><Field label="Giới tính"><Select value={form.sex || 'female'} onChange={(value) => update({ sex: value })} options={[{ value: 'female', label: 'Cái' }, { value: 'male', label: 'Đực' }]} /></Field><Field label="Ngày sinh"><Input value={`${String(form.ageYears || 0).padStart(2, '0')}/${String(form.ageMonths || 0).padStart(2, '0')}/2026`} readOnly /></Field></div></section>
+          <section><h2 className="mb-5 text-[22px] font-extrabold">Lối sống</h2><div className="space-y-4"><Field label="Cân nặng"><WeightControl value={form.weightKg || 4.4} onChange={(value) => update({ weightKg: value })} /></Field><Field label="Trạng thái cơ thể"><Select value={form.weightGoal || 'gain'} onChange={(value) => update({ weightGoal: value })} options={weightGoalOptions} /></Field><Field label="Mức độ hoạt động"><Select value={form.activityLevel || 'active'} onChange={(value) => update({ activityLevel: value })} options={activityOptions} /></Field><Field label="Thức ăn"><Select value={form.currentFoodType || 'dry'} onChange={(value) => update({ currentFoodType: value })} options={foodTypeOptions} /></Field></div></section>
+          <section><h2 className="mb-5 text-[22px] font-extrabold">Sức khỏe</h2><p className="mb-4 text-sm font-semibold">Dị ứng và những gì {form.name || 'bé'} thích không ăn:</p><div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">{allergyOptions.map((label) => <AllergyBox key={label} label={label} checked={label === 'Không có' ? form.noAllergies : selectedAllergies.includes(label)} onClick={() => toggleAllergy(label)} />)}</div></section>
         </div>
-        <div className="mt-7 space-y-4">
-          <p className="text-sm font-black text-[#4d2b63]">Mục tiêu sức khỏe</p>
-          <div className="grid gap-3 sm:grid-cols-4">{healthGoalOptions.map((option) => <button type="button" key={option.value} onClick={() => toggleGoal(option.value)} className={`rounded-[16px] border px-4 py-3 text-sm font-bold ${form.healthGoals.includes(option.value) ? 'border-[#f0b83c] bg-[#fff2c7]' : 'border-[#eadff8] bg-white'}`}>{option.label}</button>)}</div>
-          <div className="grid gap-3 sm:grid-cols-3">{activityOptions.map((option) => <button type="button" key={option.value} onClick={() => update({ activityLevel: option.value })} className={`rounded-[16px] border px-4 py-3 text-sm font-bold ${form.activityLevel === option.value ? 'border-[#f0b83c] bg-[#fff2c7]' : 'border-[#eadff8] bg-white'}`}>{option.label}</button>)}</div>
-          <div className="grid gap-3 sm:grid-cols-3">{weightGoalOptions.map((option) => <button type="button" key={option.value} onClick={() => update({ weightGoal: option.value })} className={`rounded-[16px] border px-4 py-3 text-sm font-bold ${form.weightGoal === option.value ? 'border-[#f0b83c] bg-[#fff2c7]' : 'border-[#eadff8] bg-white'}`}>{option.label}</button>)}</div>
-          <div className="grid gap-3 sm:grid-cols-3">{foodTypeOptions.map((option) => <button type="button" key={option.value} onClick={() => update({ currentFoodType: option.value })} className={`rounded-[16px] border px-4 py-3 text-sm font-bold ${form.currentFoodType === option.value ? 'border-[#f0b83c] bg-[#fff2c7]' : 'border-[#eadff8] bg-white'}`}>{option.label}</button>)}</div>
-        </div>
-        <div className="mt-8 flex justify-end gap-3"><button type="button" onClick={() => navigate('/meow-quizz/ho-so')} className="rounded-full bg-[#f7f1ff] px-6 py-3 text-sm font-bold text-[#6d4b8d]">Huỷ</button><button disabled={saving} className="rounded-full bg-[#f7c64b] px-6 py-3 text-sm font-black text-[#4b3411] shadow-[0_7px_0_#d79d23]">{saving ? 'Đang lưu...' : 'Lưu hồ sơ'}</button></div>
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#eff1ff] px-4 py-5"><div className="mx-auto flex max-w-[624px] items-center justify-center gap-12"><button type="button" onClick={() => navigate('/meow-quizz/ho-so')} className="h-14 min-w-[160px] rounded-full text-base font-extrabold">Hủy bỏ</button><button disabled={saving} className="h-14 min-w-[226px] rounded-full bg-[#ffca2d] text-base font-extrabold disabled:opacity-60">{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</button></div></div>
       </form>
     </section>
   );
