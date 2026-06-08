@@ -436,7 +436,7 @@ export default function ContactRequestPage() {
               CÂU TRẢ LỜI?
             </span>
           </h2>
-          <p className="mx-auto mt-5 max-w-[330px] text-[16px] font-semibold leading-7 text-[#5C4033] md:max-w-[720px] md:text-[18px]">
+          <p className="mx-auto mt-5 max-w-[280px] text-[16px] font-semibold leading-7 text-[#5C4033] sm:max-w-[330px] md:max-w-[720px] md:text-[18px]">
             Chuyên viên tư vấn dinh dưỡng của chúng mình luôn sẵn sàng lắng nghe và giải
             đáp mọi thắc mắc của bạn qua chat trực tuyến hoặc hotline.
           </p>

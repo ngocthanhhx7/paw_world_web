@@ -17,23 +17,32 @@ function ProfileCard({ profile, onDelete }) {
   return (
     <article className="relative h-[462px] w-[354px] rounded-[26px] border-2 border-[#d7d0bf] bg-white p-6 shadow-[0_16px_30px_rgba(39,34,46,0.08)]">
       <div className="absolute left-4 top-4 z-10 flex gap-2">
-        <Link to={`/meow-quizz/ho-so/${profile._id}/chinh-sua`} className="grid h-10 w-10 place-items-center rounded-full bg-[#f5dcea] text-[#1f1b26]">
+        <Link to={`/meow-quizz/ho-so/${profile._id}/chinh-sua`} className="grid h-40 w-40 max-h-10 max-w-10 place-items-center rounded-full bg-[#f5dcea] text-[#1f1b26]">
           <Edit3 size={17} />
         </Link>
         <button type="button" onClick={onDelete} className="grid h-10 w-10 place-items-center rounded-full bg-[#9cdcc4] text-[#1f1b26]">
           <Trash2 size={16} />
         </button>
       </div>
+
       <div className="h-[298px] overflow-hidden rounded-[24px] bg-[#d9d0c2]">
         <img src={profile.photoUrl || fallbackCat} alt={profile.name} className="h-full w-full object-cover" />
       </div>
+
       <div className="mt-5 flex items-center justify-between border-b border-[#ebe8e1] pb-4">
         <h2 className="text-[24px] font-extrabold text-[#17151b]">{profile.name || 'Pun'}</h2>
         <span className="rounded-full bg-[#d7f6ed] px-4 py-2 text-sm font-bold text-[#8d9a93]">{profileAgeLabel(profile)}</span>
       </div>
+
       <div className="mt-4 grid grid-cols-2 gap-5 text-sm font-semibold text-[#817b82]">
-        <span className="inline-flex items-center gap-2"><Square size={14} />{profile.weightKg || 3} kg</span>
-        <span className="inline-flex items-center gap-2"><Square size={14} />{activityLabel(profile.activityLevel)}</span>
+        <span className="inline-flex items-center gap-2">
+          <Square size={14} />
+          {profile.weightKg || 3} kg
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <Square size={14} />
+          {activityLabel(profile.activityLevel)}
+        </span>
       </div>
     </article>
   );
@@ -41,9 +50,14 @@ function ProfileCard({ profile, onDelete }) {
 
 function AddCard() {
   return (
-    <Link to="/meow-quizz" className="grid h-[462px] w-[338px] place-items-center rounded-[26px] border-2 border-dashed border-[#8d877d] bg-white text-center">
+    <Link
+      to="/meow-quizz"
+      className="grid h-[462px] w-[338px] place-items-center rounded-[26px] border-2 border-dashed border-[#8d877d] bg-white text-center"
+    >
       <span>
-        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#ffca2d] text-[#141218]"><Plus size={30} strokeWidth={2.8} /></span>
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#ffca2d] text-[#141218]">
+          <Plus size={30} strokeWidth={2.8} />
+        </span>
         <span className="mt-8 block text-[24px] font-extrabold text-[#746c34]">Thêm bé mèo</span>
         <span className="mt-4 block text-base font-medium text-[#5b565a]">chào đón bé mèo mới</span>
       </span>
@@ -59,13 +73,23 @@ function DeleteModal({ profile, onCancel, onConfirm }) {
         <div className="flex items-start justify-between gap-6">
           <div>
             <h2 className="crayon text-[26px] leading-none text-[#1e1b24]">Xóa hồ sơ</h2>
-            <p className="mt-10 max-w-[360px] text-lg leading-8 text-[#655f61]">Bạn có chắc muốn xóa hồ sơ thú cưng này không?<br />Hành động này không thể hoàn tác.</p>
+            <p className="mt-10 max-w-[360px] text-lg leading-8 text-[#655f61]">
+              Bạn có chắc muốn xóa hồ sơ thú cưng này không?
+              <br />
+              Hành động này không thể hoàn tác.
+            </p>
           </div>
-          <button type="button" onClick={onCancel} className="text-3xl text-[#1f1b26]" aria-label="Đóng">×</button>
+          <button type="button" onClick={onCancel} className="text-[#1f1b26]" aria-label="Đóng">
+            ×
+          </button>
         </div>
         <div className="mt-12 flex items-center justify-end gap-12">
-          <button type="button" onClick={onCancel} className="text-2xl font-extrabold text-[#1f1b26]">Hủy</button>
-          <button type="button" onClick={onConfirm} className="h-16 w-[204px] rounded-full bg-[#ffca2d] text-2xl font-extrabold text-[#1f1b26]">Xóa</button>
+          <button type="button" onClick={onCancel} className="text-2xl font-extrabold text-[#1f1b26]">
+            Hủy
+          </button>
+          <button type="button" onClick={onConfirm} className="h-16 w-[204px] rounded-full bg-[#ffca2d] text-2xl font-extrabold text-[#1f1b26]">
+            Xóa
+          </button>
         </div>
       </div>
     </div>
@@ -104,16 +128,34 @@ export default function PetProfilesPage() {
 
   return (
     <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] px-16 py-16 text-[#1d1a22] max-lg:px-5">
+      <div className="pointer-events-none absolute -left-12 top-28 hidden h-[250px] w-[250px] -rotate-[26deg] opacity-[0.08] lg:block">
+        <img src="/assets/icon/khac/pets.svg" alt="" className="h-full w-full" />
+      </div>
+
       <h1 className="crayon text-center text-[56px] leading-none text-[#1f1d27]">Thú cưng của tôi</h1>
+
       <div className="mx-auto mt-14 flex max-w-[1152px] items-start gap-14 max-lg:flex-wrap max-lg:justify-center">
         {loading ? <div className="rounded-2xl bg-white px-8 py-6 font-bold">Đang tải hồ sơ...</div> : null}
+        {!loading && profiles.length === 0 ? <AddCard /> : null}
         {!loading && profiles.map((profile) => <ProfileCard key={profile._id} profile={profile} onDelete={() => setDeleting(profile)} />)}
-        {!loading ? <AddCard /> : null}
+        {!loading && profiles.length > 0 ? <AddCard /> : null}
       </div>
+
       <div className="mx-auto mt-12 flex max-w-[1152px] items-center justify-between max-sm:flex-col max-sm:gap-5">
-        <button type="button" onClick={() => navigate('/meow-quizz')} className="inline-flex h-[52px] min-w-[172px] items-center justify-center gap-3 rounded-full border-2 border-[#d6d0c3] bg-white text-base font-bold text-[#817b74]"><ArrowLeft size={20} />Trở lại</button>
-        <button type="button" disabled={!primaryProfile} onClick={() => primaryProfile && navigate(`/meow-quizz/ket-qua/${primaryProfile._id}`)} className="h-[52px] min-w-[226px] rounded-full bg-[#ffca2d] text-base font-extrabold text-[#1f1b26] disabled:opacity-45">Tiếp tục</button>
+        <button type="button" onClick={() => navigate('/meow-quizz')} className="inline-flex h-[52px] min-w-[172px] items-center justify-center gap-3 rounded-full border-2 border-[#d6d0c3] bg-white text-base font-bold text-[#817b74]">
+          <ArrowLeft size={20} />
+          Trở lại
+        </button>
+        <button
+          type="button"
+          disabled={!primaryProfile}
+          onClick={() => primaryProfile && navigate(`/meow-quizz/ket-qua/${primaryProfile._id}`)}
+          className="h-[52px] min-w-[226px] rounded-full bg-[#ffca2d] text-base font-extrabold text-[#1f1b26] disabled:opacity-45"
+        >
+          Tiếp tục
+        </button>
       </div>
+
       <DeleteModal profile={deleting} onCancel={() => setDeleting(null)} onConfirm={remove} />
     </section>
   );

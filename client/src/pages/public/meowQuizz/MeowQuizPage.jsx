@@ -35,19 +35,57 @@ const DRAFT_KEY = 'paw_meow_quizz_draft';
 const RESUME_KEY = 'paw_meow_quizz_resume';
 
 const visualSteps = [
-  { key: 'name', title: 'Tên bé mèo của bạn là gì?' },
-  { key: 'age', title: 'Bé Pun bao nhiêu tuổi?' },
-  { key: 'weight', title: 'Bé Pun bao nhiêu cân?' },
-  { key: 'allergies', title: 'Bé Pun có dị ứng với món ăn không?' },
-  { key: 'healthGoals', title: 'Sen có mục tiêu về sức khỏe cho bé không?' },
-  { key: 'activity', title: 'Bé Pun có hoạt động thường xuyên không?' },
-  { key: 'weightGoal', title: 'Mục tiêu cân nặng của bé là?' },
-  { key: 'foodType', title: 'Hiện tại sen đang cho bé ăn là?' },
-  { key: 'flavors', title: 'Vị ưa thích của bé Pun là gì nè?' },
-  { key: 'photo', title: 'Vị ưa thích của bé Pun là gì nè?' },
+  {
+    key: 'name',
+    title: 'Tên bé mèo của bạn là gì?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'age',
+    title: 'Bé Pun bao nhiêu tuổi?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'weight',
+    title: 'Bé Pun bao nhiêu cân?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'allergies',
+    title: 'Bé Pun có dị ứng với món ăn không?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'healthGoals',
+    title: 'Sen có mục tiêu về sức khỏe cho bé không?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'activity',
+    title: 'Bé Pun có hoạt động thường xuyên không?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'weightGoal',
+    title: 'Mục tiêu cân nặng của bé là?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'foodType',
+    title: 'Hiện tại sen đang cho bé ăn là?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'flavors',
+    title: 'Vị ưa thích của bé Pun là gì nè?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'photo',
+    title: 'Vị ưa thích của bé Pun là gì nè?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
 ];
-
-const helperText = 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.';
 
 function cx(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -163,7 +201,9 @@ function SquareChoice({ selected, label, icon, onClick }) {
         selected ? 'border-2 border-[#b9bfff] bg-[#fffdf3]' : 'border-2 border-transparent bg-[#f0eff8]',
       )}
     >
-      <span className={cx('grid h-16 w-16 place-items-center rounded-full bg-white shadow-sm', selected && 'bg-[#c7c9ff]')}>{icon}</span>
+      <span className={cx('grid h-16 w-16 place-items-center rounded-full bg-white shadow-sm', selected && 'bg-[#c7c9ff]')}>
+        {icon}
+      </span>
       <span className="text-2xl font-semibold text-[#4c4958]">{label}</span>
     </button>
   );
@@ -174,7 +214,9 @@ function StepCard({ step, form, onBack, onNext, nextDisabled, children, saving }
     <div className="meow-quiz-card rounded-[30px] bg-white px-12 py-12 max-sm:px-6">
       <StepBadge step={step} onBack={onBack} />
       <h1 className="crayon text-center text-[30px] leading-tight text-[#25232b]">{titleFor(visualSteps[step], form)}</h1>
-      <p className="mx-auto mt-5 max-w-[510px] text-center text-base leading-6 text-[#5f5968]">{helperText}</p>
+      <p className="mx-auto mt-5 max-w-[510px] text-center text-base leading-6 text-[#5f5968]">
+        {visualSteps[step].description}
+      </p>
       <div className="mt-10">{children}</div>
       <PrimaryButton disabled={nextDisabled || saving} onClick={onNext}>
         {saving ? 'Đang lưu...' : 'Tiếp theo'}
@@ -305,10 +347,20 @@ export default function MeowQuizPage() {
       return (
         <div className="space-y-8">
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-            <ChoiceButton selected={form.sex === 'male'} onClick={() => update({ sex: 'male' })} icon={<PawPrint size={22} />} className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base">
+            <ChoiceButton
+              selected={form.sex === 'male'}
+              onClick={() => update({ sex: 'male' })}
+              icon={<PawPrint size={22} />}
+              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base"
+            >
               Tên cậu bé mèo là...
             </ChoiceButton>
-            <ChoiceButton selected={form.sex === 'female'} onClick={() => update({ sex: 'female' })} icon={<HeartPulse size={22} />} className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base">
+            <ChoiceButton
+              selected={form.sex === 'female'}
+              onClick={() => update({ sex: 'female' })}
+              icon={<HeartPulse size={22} />}
+              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base"
+            >
               Tên cô bé mèo là...
             </ChoiceButton>
           </div>
@@ -318,12 +370,12 @@ export default function MeowQuizPage() {
     }
 
     if (key === 'age') {
-      const years = Array.from({ length: 20 }, (_, index) => ({ value: String(index + 1), label: `${index + 1} tuổi` }));
-      const months = Array.from({ length: 11 }, (_, index) => ({ value: String(index + 1), label: `${index + 1} tháng` }));
+      const years = Array.from({ length: 21 }, (_, index) => ({ value: String(index), label: index ? `${index} tuổi` : 'Năm' }));
+      const months = Array.from({ length: 12 }, (_, index) => ({ value: String(index), label: index ? `${index} tháng` : 'Tháng' }));
       return (
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-          <SelectField label="Năm" value={String(form.ageYears ?? '')} onChange={(value) => update({ ageYears: value })} options={years} placeholder="Năm" />
-          <SelectField label="Tháng" value={String(form.ageMonths ?? '')} onChange={(value) => update({ ageMonths: value })} options={months} placeholder="Tháng" />
+          <SelectField label="Năm" value={String(form.ageYears ?? '')} onChange={(value) => update({ ageYears: value })} options={years.slice(1)} placeholder="Năm" />
+          <SelectField label="Tháng" value={String(form.ageMonths ?? '')} onChange={(value) => update({ ageMonths: value })} options={months.slice(1)} placeholder="Tháng" />
         </div>
       );
     }
@@ -350,8 +402,18 @@ export default function MeowQuizPage() {
     if (key === 'allergies') {
       return (
         <div className="space-y-10">
-          <TextField label="Nhập thành phần cụ thể (nếu có)" value={form.allergies} disabled={form.noAllergies} onChange={(event) => update({ allergies: event.target.value, noAllergies: false })} placeholder="Ví dụ: Tôm, Cua, Cà rốt..." />
-          <button type="button" onClick={() => update({ noAllergies: !form.noAllergies, allergies: form.noAllergies ? form.allergies : '' })} className="flex h-[58px] w-full items-center justify-between rounded-2xl bg-[#f0eff8] px-5 text-left text-base font-medium">
+          <TextField
+            label="Nhập thành phần cụ thể (nếu có)"
+            value={form.allergies}
+            disabled={form.noAllergies}
+            onChange={(event) => update({ allergies: event.target.value, noAllergies: false })}
+            placeholder="Ví dụ: Tôm, Cua, Cà rốt..."
+          />
+          <button
+            type="button"
+            onClick={() => update({ noAllergies: !form.noAllergies, allergies: form.noAllergies ? form.allergies : '' })}
+            className="flex h-[58px] w-full items-center justify-between rounded-2xl bg-[#f0eff8] px-5 text-left text-base font-medium"
+          >
             Bé không có dị ứng
             <span className={cx('relative h-6 w-11 rounded-full transition', form.noAllergies ? 'bg-[#b7baf5]' : 'bg-[#b9b7ca]')}>
               <span className={cx('absolute top-1 h-4 w-4 rounded-full bg-white transition', form.noAllergies ? 'left-6 bg-[#ffc62d]' : 'left-1')} />
@@ -362,27 +424,69 @@ export default function MeowQuizPage() {
     }
 
     if (key === 'healthGoals') {
-      const icons = { bone: <Bone size={28} />, skin_coat: <PawPrint size={30} />, teeth: <Sparkles size={28} />, digestion: <ShieldPlus size={28} /> };
-      return <div className="grid grid-cols-2 gap-4">{healthGoalOptions.map((option) => <SquareChoice key={option.value} selected={form.healthGoals.includes(option.value)} label={option.label} icon={icons[option.value]} onClick={() => toggleGoal(option.value)} />)}</div>;
+      const icons = {
+        bone: <Bone size={28} />,
+        skin_coat: <PawPrint size={30} />,
+        teeth: <Sparkles size={28} />,
+        digestion: <ShieldPlus size={28} />,
+      };
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          {healthGoalOptions.map((option) => (
+            <SquareChoice key={option.value} selected={form.healthGoals.includes(option.value)} label={option.label} icon={icons[option.value]} onClick={() => toggleGoal(option.value)} />
+          ))}
+        </div>
+      );
     }
 
     if (key === 'activity') {
       const icons = { low: <Activity size={24} />, active: <PawPrint size={24} />, very_active: <Zap size={24} /> };
-      return <div className="space-y-4">{activityOptions.map((option) => <ChoiceButton key={option.value} selected={form.activityLevel === option.value} onClick={() => update({ activityLevel: option.value })} icon={icons[option.value]}>{option.label}</ChoiceButton>)}</div>;
+      return (
+        <div className="space-y-4">
+          {activityOptions.map((option) => (
+            <ChoiceButton key={option.value} selected={form.activityLevel === option.value} onClick={() => update({ activityLevel: option.value })} icon={icons[option.value]}>
+              {option.label}
+            </ChoiceButton>
+          ))}
+        </div>
+      );
     }
 
     if (key === 'weightGoal') {
       const icons = { gain: <TrendingUp size={24} />, maintain: <Scale size={24} />, lose: <TrendingDown size={24} /> };
-      return <div className="space-y-4">{weightGoalOptions.map((option) => <ChoiceButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })} icon={icons[option.value]}>{option.label}</ChoiceButton>)}</div>;
+      return (
+        <div className="space-y-4">
+          {weightGoalOptions.map((option) => (
+            <ChoiceButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })} icon={icons[option.value]}>
+              {option.label}
+            </ChoiceButton>
+          ))}
+        </div>
+      );
     }
 
     if (key === 'foodType') {
       const icons = { dry: <Waves size={24} />, wet: <Fish size={24} />, mixed: <Sparkles size={24} /> };
-      return <div className="space-y-4">{foodTypeOptions.map((option) => <ChoiceButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })} icon={icons[option.value]}>{option.label}</ChoiceButton>)}</div>;
+      return (
+        <div className="space-y-4">
+          {foodTypeOptions.map((option) => (
+            <ChoiceButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })} icon={icons[option.value]}>
+              {option.label}
+            </ChoiceButton>
+          ))}
+        </div>
+      );
     }
 
     if (key === 'flavors') {
-      return <TextField label="Vị đó là gì" value={form.favoriteFlavors} onChange={(event) => update({ favoriteFlavors: event.target.value })} placeholder="Ví dụ: Thịt gà, thịt bò, thịt lợn..." />;
+      return (
+        <TextField
+          label="Vị đó là gì"
+          value={form.favoriteFlavors}
+          onChange={(event) => update({ favoriteFlavors: event.target.value })}
+          placeholder="Ví dụ: Thịt gà, thịt bò, thịt lợn..."
+        />
+      );
     }
 
     return (
@@ -392,7 +496,9 @@ export default function MeowQuizPage() {
           <span className="mx-auto grid h-24 w-24 place-items-center rounded-full border-2 border-[#7d5bff] text-[#6b43ee]">
             <CloudUpload size={34} />
           </span>
-          <span className="mt-4 block text-sm font-bold text-[#6b43ee]">{uploadingPhoto ? 'Đang tải ảnh...' : form.photoUrl ? 'Đã tải ảnh lên' : 'Tải ảnh lên hoặc kéo thả'}</span>
+          <span className="mt-4 block text-sm font-bold text-[#6b43ee]">
+            {uploadingPhoto ? 'Đang tải ảnh...' : form.photoUrl ? 'Đã tải ảnh lên' : 'Tải ảnh lên hoặc kéo thả'}
+          </span>
           <span className="mt-1 block text-xs font-semibold text-[#9b96a8]">Tối đa 10MB</span>
         </span>
       </label>

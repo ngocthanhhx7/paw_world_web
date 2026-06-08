@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import MainLayout from '@/layouts/MainLayout';
+import MeowQuizzLayout from '@/layouts/MeowQuizzLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 
 import HomePage from '@/pages/public/HomePage';
@@ -49,6 +50,14 @@ export default function App() {
 
   return (
     <Routes>
+      <Route element={<MeowQuizzLayout />}>
+        <Route path="/meow-quizz" element={<MeowQuizPage />} />
+        <Route path="/meow-quizz/ho-so" element={<PetProfilesPage />} />
+        <Route path="/meow-quizz/ho-so/:id" element={<PetProfileDetailPage />} />
+        <Route path="/meow-quizz/ho-so/:id/chinh-sua" element={<PetProfileEditPage />} />
+        <Route path="/meow-quizz/ket-qua/:profileId" element={<RecommendationPage />} />
+      </Route>
+
       {/* Public site */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
@@ -65,11 +74,6 @@ export default function App() {
         <Route path="/dang-ky" element={<RegisterPage />} />
         <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />
         <Route path="/dat-lai-mat-khau/:token" element={<ResetPasswordPage />} />
-        <Route path="/meow-quizz" element={<MeowQuizPage />} />
-        <Route path="/meow-quizz/ho-so" element={<PetProfilesPage />} />
-        <Route path="/meow-quizz/ho-so/:id" element={<PetProfileDetailPage />} />
-        <Route path="/meow-quizz/ho-so/:id/chinh-sua" element={<PetProfileEditPage />} />
-        <Route path="/meow-quizz/ket-qua/:profileId" element={<RecommendationPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 

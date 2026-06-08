@@ -1,4 +1,4 @@
-const Product = require('../models/Product');
+﻿const Product = require('../models/Product');
 const { streamChatCompletion } = require('./shineshopChat.service');
 
 const FALLBACK_PRODUCTS = [
@@ -17,7 +17,7 @@ const FALLBACK_PRODUCTS = [
     price: 39000,
     foodType: 'wet',
     flavor: 'tuna',
-    healthNeeds: ['skin'],
+    healthNeeds: ['skin_coat'],
     source: 'fallback',
   },
   {
@@ -93,10 +93,17 @@ function extractJson(text) {
 }
 
 async function fetchCatalogProducts(ProductModel = Product) {
-  const products = await ProductModel.find({ isActive: true, foodType: { $in: ['dry', 'wet', 'mixed'] } })
-    .sort({ isBestSeller: -1, soldCount: -1, createdAt: -1 })
-    .limit(8);
-  return mergeCatalogProducts(products);
+  try {
+    const products = await Promise.race([
+      ProductModel.find({ isActive: true, foodType: { $in: ['dry', 'wet', 'mixed'] } })
+        .sort({ isBestSeller: -1, soldCount: -1, createdAt: -1 })
+        .limit(8),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Product catalog timeout')), 3000)),
+    ]);
+    return mergeCatalogProducts(products);
+  } catch {
+    return FALLBACK_PRODUCTS;
+  }
 }
 
 async function buildRecommendationForProfile(profile, options = {}) {
