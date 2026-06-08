@@ -22,10 +22,12 @@ export default function RecommendationPage() {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
+    let active = true;
     petProfileApi.recommend(profileId)
-      .then((response) => setData(response))
-      .catch((err) => toast.error(err?.response?.data?.message || 'Chưa tạo được gợi ý AI'))
-      .finally(() => setLoading(false));
+      .then((response) => { if (active) setData(response); })
+      .catch((err) => { if (active) toast.error(err?.response?.data?.message || 'Chưa tạo được gợi ý AI'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [profileId]);
 
   const profile = data?.profile;
@@ -80,3 +82,4 @@ export default function RecommendationPage() {
     </section>
   );
 }
+

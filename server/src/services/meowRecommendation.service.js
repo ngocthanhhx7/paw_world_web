@@ -107,12 +107,15 @@ async function buildRecommendationForProfile(profile, options = {}) {
 
   try {
     let content = '';
-    await stream({
-      messages: [{ role: 'user', content: buildRecommendationPrompt(plainProfile, catalog) }],
-      onToken: (token) => {
-        content += token;
-      },
-    });
+    await Promise.race([
+      stream({
+        messages: [{ role: 'user', content: buildRecommendationPrompt(plainProfile, catalog) }],
+        onToken: (token) => {
+          content += token;
+        },
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI recommendation timeout')), 12000)),
+    ]);
     return { ...buildDeterministicRecommendation(plainProfile, catalog, 'ai'), ...extractJson(content), source: 'ai' };
   } catch (err) {
     return buildDeterministicRecommendation(plainProfile, catalog, 'fallback');
@@ -127,4 +130,5 @@ module.exports = {
   buildDeterministicRecommendation,
   buildRecommendationForProfile,
 };
+
 
