@@ -15,6 +15,7 @@ const orderRoutes = require('./routes/order.routes');
 const leadRoutes = require('./routes/lead.routes');
 const authRoutes = require('./routes/auth.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
+const petProfileRoutes = require('./routes/petProfile.routes');
 const adminProductRoutes = require('./routes/admin/product.admin.routes');
 const adminCategoryRoutes = require('./routes/admin/category.admin.routes');
 const adminOrderRoutes = require('./routes/admin/order.admin.routes');
@@ -62,6 +63,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/customer/pet-profiles', petProfileRoutes);
 
 /* ------------------------------ Admin API --------------------------------- */
 app.use('/api/admin/products', adminProductRoutes);

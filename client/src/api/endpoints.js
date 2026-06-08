@@ -1,4 +1,4 @@
-import api from './client';
+﻿import api from './client';
 
 export const productApi = {
   list: (params) => api.get('/products', { params }).then((r) => r.data),
@@ -34,6 +34,28 @@ export const authApi = {
   logout: () => api.post('/auth/admin/logout').then((r) => r.data),
 };
 
+export const customerAuthApi = {
+  register: (payload) => api.post('/auth/customer/register', payload).then((r) => r.data),
+  login: (payload) => api.post('/auth/customer/login', payload).then((r) => r.data),
+  me: () => api.get('/auth/customer/me').then((r) => r.data),
+  logout: () => api.post('/auth/customer/logout').then((r) => r.data),
+  forgotPassword: (payload) =>
+    api.post('/auth/customer/forgot-password', payload).then((r) => r.data),
+  resetPassword: (payload) =>
+    api.post('/auth/customer/reset-password', payload).then((r) => r.data),
+};
+
+export const petProfileApi = {
+  list: () => api.get('/customer/pet-profiles').then((r) => r.data),
+  get: (id) => api.get(`/customer/pet-profiles/${id}`).then((r) => r.data),
+  create: (payload) => api.post('/customer/pet-profiles', payload).then((r) => r.data),
+  uploadPhoto: (formData) =>
+    api.post('/customer/pet-profiles/upload-photo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
+  update: (id, payload) => api.put(`/customer/pet-profiles/${id}`, payload).then((r) => r.data),
+  remove: (id) => api.delete(`/customer/pet-profiles/${id}`).then((r) => r.data),
+  recommend: (id) => api.post(`/customer/pet-profiles/${id}/recommendation`).then((r) => r.data),
+};
+
 export const adminApi = {
   // products
   listProducts: (params) => api.get('/admin/products', { params }).then((r) => r.data),
@@ -64,3 +86,7 @@ export const adminApi = {
   // stats
   overview: () => api.get('/admin/stats/overview').then((r) => r.data),
 };
+
+
+
+

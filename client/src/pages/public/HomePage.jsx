@@ -300,7 +300,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
-                to="/lien-he-tu-van"
+                to="/meow-quizz"
                 className="inline-flex items-center justify-center rounded-full bg-[#FFCB2E] hover:bg-[#FFB800] text-[#3F2A6B] font-extrabold px-9 py-4 text-[15px] shadow-[0_8px_0_rgba(63,42,107,0.12)] transition-all hover:-translate-y-0.5"
               >
                 Làm Quiz ngay
