@@ -1,7 +1,24 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowRight, Camera, Check, Sparkles, Upload } from 'lucide-react';
+import {
+  Activity,
+  ArrowLeft,
+  Bone,
+  CloudUpload,
+  Fish,
+  HeartPulse,
+  Minus,
+  PawPrint,
+  Plus,
+  Scale,
+  ShieldPlus,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  Waves,
+  Zap,
+} from 'lucide-react';
 
 import { petProfileApi } from '@/api/endpoints';
 import { useCustomerAuthStore } from '@/store/customerAuthStore';
@@ -17,51 +34,194 @@ import {
 const DRAFT_KEY = 'paw_meow_quizz_draft';
 const RESUME_KEY = 'paw_meow_quizz_resume';
 
-const steps = [
-  { key: 'name', title: 'Tên của bé mèo?', hint: 'Nhập tên thân mật để AI tạo hồ sơ riêng cho bé.' },
-  { key: 'sex', title: 'Bé là một...', hint: 'Thông tin này giúp gợi ý cá nhân hóa hơn.' },
-  { key: 'age', title: 'Bé bao nhiêu tuổi nè?', hint: 'Tuổi tác ảnh hưởng trực tiếp tới năng lượng và chế độ ăn.' },
-  { key: 'breed', title: 'Bé thuộc giống mèo gì nhỉ?', hint: 'Nếu chưa rõ, sen có thể nhập mèo ta hoặc chưa rõ.' },
-  { key: 'weight', title: 'Hiện tại bé nặng bao nhiêu kg?', hint: 'Cân nặng giúp ước tính calo mỗi ngày chính xác hơn.' },
-  { key: 'allergies', title: 'Bé có dị ứng với món ăn gì không sen?', hint: 'AI sẽ tránh các thành phần không phù hợp.' },
-  { key: 'health', title: 'Bé có vấn đề sức khỏe nào không nè?', hint: 'Ghi ngắn gọn các tình trạng đang quan tâm.' },
-  { key: 'goals', title: 'Sen đang có mục tiêu sức khỏe nào cho bé?', hint: 'Có thể chọn nhiều mục tiêu cùng lúc.' },
-  { key: 'activity', title: 'Bé có thường xuyên hoạt động không nè?', hint: 'Mức độ vận động sẽ điều chỉnh khẩu phần phù hợp.' },
-  { key: 'food', title: 'Khẩu vị và bữa ăn hiện tại của bé?', hint: 'Thông tin cuối để AI tạo meal kit và combo sản phẩm.' },
-  { key: 'photo', title: 'Sen muốn chia sẻ hình ảnh của bé không?', hint: 'Ảnh giúp hồ sơ sinh động hơn. Sen có thể bỏ qua nếu chưa có ảnh.' },
-  { key: 'review', title: 'Hồ sơ của bé đã sẵn sàng', hint: 'Kiểm tra nhanh trước khi AI tổng hợp combo thức ăn và chế độ chăm sóc.' },
+const visualSteps = [
+  {
+    key: 'name',
+    title: 'Tên bé mèo của bạn là gì?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'age',
+    title: 'Bé Pun bao nhiêu tuổi?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'weight',
+    title: 'Bé Pun bao nhiêu cân?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'allergies',
+    title: 'Bé Pun có dị ứng với món ăn không?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'healthGoals',
+    title: 'Sen có mục tiêu về sức khỏe cho bé không?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'activity',
+    title: 'Bé Pun có hoạt động thường xuyên không?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'weightGoal',
+    title: 'Mục tiêu cân nặng của bé là?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'foodType',
+    title: 'Hiện tại sen đang cho bé ăn là?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'flavors',
+    title: 'Vị ưa thích của bé Pun là gì nè?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
+  {
+    key: 'photo',
+    title: 'Vị ưa thích của bé Pun là gì nè?',
+    description: 'Hãy chia sẻ một chút về người bạn bốn chân của bạn để chúng mình bắt đầu cá nhân hóa thực đơn nhé.',
+  },
 ];
 
 function cx(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-function OptionButton({ selected, children, onClick }) {
+function catName(form) {
+  return form.name?.trim() || 'Pun';
+}
+
+function titleFor(step, form) {
+  return step.title.replaceAll('Pun', catName(form));
+}
+
+function QuizFrame({ children }) {
+  return (
+    <section className="meow-quiz-bg relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#f3ddff] px-5 py-[86px]">
+      <div className="pointer-events-none absolute left-[-18px] top-[112px] hidden h-[252px] w-[252px] -rotate-[26deg] opacity-30 lg:block">
+        <PawPrint className="h-full w-full fill-[#cdb6df] text-[#cdb6df]" strokeWidth={0.4} />
+      </div>
+      <div className="pointer-events-none absolute right-[-28px] bottom-[72px] hidden h-[172px] w-[172px] rotate-[28deg] opacity-30 lg:block">
+        <PawPrint className="h-full w-full fill-[#cdb6df] text-[#cdb6df]" strokeWidth={0.4} />
+      </div>
+      <div className="relative z-10 mx-auto max-w-[602px]">{children}</div>
+    </section>
+  );
+}
+
+function StepBadge({ step, onBack }) {
+  return (
+    <div className="mb-7 flex justify-center">
+      <button type="button" onClick={onBack} className="mr-2 text-[#1f1d27]" aria-label="Quay lại">
+        <ArrowLeft size={17} />
+      </button>
+      <span className="rounded-full bg-[#e3d5ff] px-4 py-2 text-sm font-semibold text-[#663cff]">
+        Bước {step + 1} trên 10
+      </span>
+    </div>
+  );
+}
+
+function PrimaryButton({ children, disabled, onClick }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="mt-8 h-[58px] w-full rounded-full bg-[#ffca2d] text-lg font-semibold text-[#5a5261] transition hover:bg-[#ffc11d] disabled:cursor-not-allowed disabled:opacity-55"
+    >
+      {children}
+    </button>
+  );
+}
+
+function TextField({ label, className, name, ...props }) {
+  const fieldName = name || label || props.placeholder || 'meow-field';
+  return (
+    <label className={cx('block text-left text-sm font-semibold text-[#4c4658]', className)}>
+      {label ? <span className="mb-2 block">{label}</span> : null}
+      <input
+        {...props}
+        name={fieldName}
+        className="h-[56px] w-full rounded-2xl border border-transparent bg-[#f1eff8] px-5 text-base font-medium text-[#363140] outline-none placeholder:text-[#c8c3d7] focus:border-[#b6b9ff] focus:bg-[#fffdf3]"
+      />
+    </label>
+  );
+}
+
+function SelectField({ label, value, onChange, options, placeholder, name }) {
+  return (
+    <label className="block text-left text-sm font-semibold text-[#4c4658]">
+      <span className="mb-2 block">{label}</span>
+      <select
+        name={name || label}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-[56px] w-full appearance-none rounded-2xl border border-transparent bg-[#f1eff8] px-5 text-base font-medium text-[#363140] outline-none focus:border-[#b6b9ff] focus:bg-[#fffdf3]"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ChoiceButton({ selected, children, icon, onClick, className }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cx(
-        'min-h-[58px] rounded-[18px] border px-5 text-left text-sm font-semibold transition',
-        selected
-          ? 'border-[#f0b83c] bg-[#fff2c7] text-[#5b3f1a] shadow-[0_8px_0_rgba(117,75,23,0.12)]'
-          : 'border-[#eadff8] bg-white text-[#5d4d72] hover:border-[#d7baf4] hover:bg-[#fbf7ff]',
+        'flex min-h-[80px] w-full items-center gap-4 rounded-[10px] px-7 text-left text-lg font-semibold transition',
+        selected ? 'border-2 border-[#b9bfff] bg-[#fffdf3]' : 'border-2 border-transparent bg-[#f0eff8]',
+        className,
       )}
     >
-      <span className="flex items-center justify-between gap-3">
-        {children}
-        {selected ? <Check size={18} /> : null}
-      </span>
+      {icon ? <span className="text-[#a98dff]">{icon}</span> : null}
+      <span>{children}</span>
     </button>
   );
 }
 
-function TextInput(props) {
+function SquareChoice({ selected, label, icon, onClick }) {
   return (
-    <input
-      {...props}
-      className="h-14 w-full rounded-[18px] border border-[#eadff8] bg-white px-5 text-base font-semibold text-[#4b3a62] outline-none transition placeholder:text-[#b5a8c8] focus:border-[#c69bed] focus:ring-4 focus:ring-[#ead7ff] disabled:bg-[#f7f2fb]"
-    />
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        'grid h-[150px] place-items-center rounded-[14px] text-center transition',
+        selected ? 'border-2 border-[#b9bfff] bg-[#fffdf3]' : 'border-2 border-transparent bg-[#f0eff8]',
+      )}
+    >
+      <span className={cx('grid h-16 w-16 place-items-center rounded-full bg-white shadow-sm', selected && 'bg-[#c7c9ff]')}>
+        {icon}
+      </span>
+      <span className="text-2xl font-semibold text-[#4c4958]">{label}</span>
+    </button>
+  );
+}
+
+function StepCard({ step, form, onBack, onNext, nextDisabled, children, saving }) {
+  return (
+    <div className="meow-quiz-card rounded-[30px] bg-white px-12 py-12 max-sm:px-6">
+      <StepBadge step={step} onBack={onBack} />
+      <h1 className="crayon text-center text-[30px] leading-tight text-[#25232b]">{titleFor(visualSteps[step], form)}</h1>
+      <p className="mx-auto mt-5 max-w-[510px] text-center text-base leading-6 text-[#5f5968]">
+        {visualSteps[step].description}
+      </p>
+      <div className="mt-10">{children}</div>
+      <PrimaryButton disabled={nextDisabled || saving} onClick={onNext}>
+        {saving ? 'Đang lưu...' : 'Tiếp theo'}
+      </PrimaryButton>
+    </div>
   );
 }
 
@@ -81,7 +241,7 @@ export default function MeowQuizPage() {
     if (!raw) return;
     try {
       setForm({ ...initialQuizForm, ...JSON.parse(raw) });
-      if (resumeStep) setStep(Number(resumeStep) || 0);
+      if (resumeStep) setStep(Math.min(Number(resumeStep) || 0, visualSteps.length - 1));
     } catch {
       sessionStorage.removeItem(DRAFT_KEY);
       sessionStorage.removeItem(RESUME_KEY);
@@ -93,8 +253,6 @@ export default function MeowQuizPage() {
     if (params.get('resume') === '1') toast.success('Đã quay lại Meow Quizz');
   }, [location.search]);
 
-  const current = steps[step];
-  const progress = useMemo(() => ((step + 1) / steps.length) * 100, [step]);
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
   const toggleGoal = (value) => {
     setForm((prev) => ({
@@ -106,35 +264,39 @@ export default function MeowQuizPage() {
   };
 
   const canContinue = () => {
-    if (current.key === 'name') return form.name.trim().length >= 1;
-    if (current.key === 'sex') return Boolean(form.sex);
-    if (current.key === 'age') return Number(form.ageYears || 0) > 0 || Number(form.ageMonths || 0) > 0;
-    if (current.key === 'breed') return form.breed.trim().length >= 1;
-    if (current.key === 'weight') return Number(form.weightKg || 0) > 0;
-    if (current.key === 'goals') return form.healthGoals.length > 0;
-    if (current.key === 'activity') return Boolean(form.activityLevel);
-    if (current.key === 'food') return Boolean(form.currentFoodType) && Boolean(form.weightGoal);
-    if (current.key === 'photo') return true;
-    if (current.key === 'review') return true;
+    const key = visualSteps[step].key;
+    if (key === 'name') return form.name.trim().length >= 2 && Boolean(form.sex);
+    if (key === 'age') return Number(form.ageYears || 0) > 0 || Number(form.ageMonths || 0) > 0;
+    if (key === 'weight') return Number(form.weightKg || 0) > 0;
+    if (key === 'healthGoals') return form.healthGoals.length > 0;
+    if (key === 'activity') return Boolean(form.activityLevel);
+    if (key === 'weightGoal') return Boolean(form.weightGoal);
+    if (key === 'foodType') return Boolean(form.currentFoodType);
     return true;
   };
 
-  const saveDraft = () => {
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
-    sessionStorage.setItem(RESUME_KEY, String(step));
+  const validationMessage = () => {
+    const key = visualSteps[step].key;
+    if (key === 'name') return 'Nhập tên và chọn giới tính của bé nha';
+    if (key === 'age') return 'Chọn tuổi của bé nha';
+    if (key === 'weight') return 'Nhập cân nặng hợp lệ nha';
+    if (key === 'healthGoals') return 'Chọn ít nhất một mục tiêu nha';
+    if (key === 'activity') return 'Chọn mức hoạt động nha';
+    if (key === 'weightGoal') return 'Chọn mục tiêu cân nặng nha';
+    if (key === 'foodType') return 'Chọn loại thức ăn hiện tại nha';
+    return 'Sen điền thêm thông tin để tiếp tục nhé';
   };
 
   const uploadPhoto = async (file) => {
     if (!file) return;
-    const formData = new FormData();
-    formData.append('photo', file);
     setUploadingPhoto(true);
     try {
+      const formData = new FormData();
+      formData.append('photo', file);
       const data = await petProfileApi.uploadPhoto(formData);
       update({ photoUrl: data.photoUrl });
-      toast.success('Đã tải ảnh của bé');
-    } catch (err) {
-      toast.error(err?.response?.data?.message || 'Chưa tải được ảnh');
+    } catch {
+      toast.error('Chưa tải được ảnh, sen thử lại sau nha');
     } finally {
       setUploadingPhoto(false);
     }
@@ -142,26 +304,27 @@ export default function MeowQuizPage() {
 
   const submit = async () => {
     if (!canContinue()) {
-      toast.error('Sen điền thêm thông tin để tiếp tục nhé');
+      toast.error(validationMessage());
       return;
     }
-    if (step < steps.length - 1) {
+    if (step < visualSteps.length - 1) {
       setStep((value) => value + 1);
       return;
     }
     if (!authReady) return;
     if (!customer) {
-      saveDraft();
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+      sessionStorage.setItem(RESUME_KEY, String(step));
       navigate('/dang-nhap?redirect=' + encodeURIComponent('/meow-quizz?resume=1'));
       return;
     }
     setSaving(true);
     try {
-      const data = await petProfileApi.create(normalizeQuizPayload(form));
+      await petProfileApi.create(normalizeQuizPayload(form));
       sessionStorage.removeItem(DRAFT_KEY);
       sessionStorage.removeItem(RESUME_KEY);
       toast.success('Đã tạo hồ sơ cho bé');
-      navigate(`/meow-quizz/ho-so/${data.profile._id}`);
+      navigate('/meow-quizz/ho-so');
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Chưa lưu được hồ sơ');
     } finally {
@@ -169,129 +332,184 @@ export default function MeowQuizPage() {
     }
   };
 
+  const goBack = () => {
+    if (step === 0) {
+      navigate('/');
+      return;
+    }
+    setStep((value) => value - 1);
+  };
+
   const renderStep = () => {
-    if (current.key === 'name') {
-      return <TextInput value={form.name} onChange={(e) => update({ name: e.target.value })} placeholder="Ví dụ: Mochi" autoFocus />;
-    }
-    if (current.key === 'sex') {
+    const key = visualSteps[step].key;
+
+    if (key === 'name') {
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <OptionButton selected={form.sex === 'female'} onClick={() => update({ sex: 'female' })}>Cô bé ngoan</OptionButton>
-          <OptionButton selected={form.sex === 'male'} onClick={() => update({ sex: 'male' })}>Chú bé ngoan</OptionButton>
+        <div className="space-y-8">
+          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <ChoiceButton
+              selected={form.sex === 'male'}
+              onClick={() => update({ sex: 'male' })}
+              icon={<PawPrint size={22} />}
+              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base"
+            >
+              Tên cậu bé mèo là...
+            </ChoiceButton>
+            <ChoiceButton
+              selected={form.sex === 'female'}
+              onClick={() => update({ sex: 'female' })}
+              icon={<HeartPulse size={22} />}
+              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base"
+            >
+              Tên cô bé mèo là...
+            </ChoiceButton>
+          </div>
+          <TextField value={form.name} onChange={(event) => update({ name: event.target.value })} placeholder="nhập tên bé mèo của bạn" autoFocus />
         </div>
       );
     }
-    if (current.key === 'age') {
+
+    if (key === 'age') {
+      const years = Array.from({ length: 21 }, (_, index) => ({ value: String(index), label: index ? `${index} tuổi` : 'Năm' }));
+      const months = Array.from({ length: 12 }, (_, index) => ({ value: String(index), label: index ? `${index} tháng` : 'Tháng' }));
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextInput type="number" min="0" value={form.ageYears} onChange={(e) => update({ ageYears: e.target.value })} placeholder="Năm" />
-          <TextInput type="number" min="0" max="11" value={form.ageMonths} onChange={(e) => update({ ageMonths: e.target.value })} placeholder="Tháng" />
+        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+          <SelectField label="Năm" value={String(form.ageYears ?? '')} onChange={(value) => update({ ageYears: value })} options={years.slice(1)} placeholder="Năm" />
+          <SelectField label="Tháng" value={String(form.ageMonths ?? '')} onChange={(value) => update({ ageMonths: value })} options={months.slice(1)} placeholder="Tháng" />
         </div>
       );
     }
-    if (current.key === 'breed') return <TextInput value={form.breed} onChange={(e) => update({ breed: e.target.value })} placeholder="Ví dụ: Mèo Anh lông ngắn" />;
-    if (current.key === 'weight') return <TextInput type="number" min="0" step="0.1" value={form.weightKg} onChange={(e) => update({ weightKg: e.target.value })} placeholder="Ví dụ: 4.2" />;
-    if (current.key === 'allergies') {
+
+    if (key === 'weight') {
+      const currentWeight = Number(form.weightKg || 4.5);
+      const changeWeight = (delta) => update({ weightKg: Math.max(0.5, Math.round((currentWeight + delta) * 10) / 10) });
       return (
-        <div className="space-y-4">
-          <OptionButton selected={form.noAllergies} onClick={() => update({ noAllergies: !form.noAllergies, allergies: '' })}>Bé không có dị ứng</OptionButton>
-          <TextInput disabled={form.noAllergies} value={form.allergies} onChange={(e) => update({ allergies: e.target.value, noAllergies: false })} placeholder="Nhập các món, cách nhau bằng dấu phẩy" />
+        <div className="weight-stepper flex h-[124px] items-center justify-between rounded-[14px] bg-[#f0eff8] px-8">
+          <button type="button" onClick={() => changeWeight(-0.1)} className="grid h-12 w-12 place-items-center rounded-full bg-[#dddde5]">
+            <Minus size={22} />
+          </button>
+          <div className="text-center text-[#6b43ee]">
+            <span className="text-5xl font-extrabold">{currentWeight.toFixed(1)}</span>
+            <span className="ml-3 text-2xl font-bold text-[#a98dff]">KG</span>
+          </div>
+          <button type="button" onClick={() => changeWeight(0.1)} className="grid h-12 w-12 place-items-center rounded-full bg-[#dddde5]">
+            <Plus size={22} />
+          </button>
         </div>
       );
     }
-    if (current.key === 'health') return <TextInput value={form.healthIssues} onChange={(e) => update({ healthIssues: e.target.value })} placeholder="Ví dụ: lông rụng, tiêu hóa kém" />;
-    if (current.key === 'goals') {
+
+    if (key === 'allergies') {
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-10">
+          <TextField
+            label="Nhập thành phần cụ thể (nếu có)"
+            value={form.allergies}
+            disabled={form.noAllergies}
+            onChange={(event) => update({ allergies: event.target.value, noAllergies: false })}
+            placeholder="Ví dụ: Tôm, Cua, Cà rốt..."
+          />
+          <button
+            type="button"
+            onClick={() => update({ noAllergies: !form.noAllergies, allergies: form.noAllergies ? form.allergies : '' })}
+            className="flex h-[58px] w-full items-center justify-between rounded-2xl bg-[#f0eff8] px-5 text-left text-base font-medium"
+          >
+            Bé không có dị ứng
+            <span className={cx('relative h-6 w-11 rounded-full transition', form.noAllergies ? 'bg-[#b7baf5]' : 'bg-[#b9b7ca]')}>
+              <span className={cx('absolute top-1 h-4 w-4 rounded-full bg-white transition', form.noAllergies ? 'left-6 bg-[#ffc62d]' : 'left-1')} />
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    if (key === 'healthGoals') {
+      const icons = {
+        bone: <Bone size={28} />,
+        skin_coat: <PawPrint size={30} />,
+        teeth: <Sparkles size={28} />,
+        digestion: <ShieldPlus size={28} />,
+      };
+      return (
+        <div className="grid grid-cols-2 gap-4">
           {healthGoalOptions.map((option) => (
-            <OptionButton key={option.value} selected={form.healthGoals.includes(option.value)} onClick={() => toggleGoal(option.value)}>
-              <span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#f7eaff] text-[#8c5bc4]">{option.icon}</span>{option.label}</span>
-            </OptionButton>
+            <SquareChoice key={option.value} selected={form.healthGoals.includes(option.value)} label={option.label} icon={icons[option.value]} onClick={() => toggleGoal(option.value)} />
           ))}
         </div>
       );
     }
-    if (current.key === 'activity') {
-      return <div className="grid gap-4">{activityOptions.map((option) => <OptionButton key={option.value} selected={form.activityLevel === option.value} onClick={() => update({ activityLevel: option.value })}>{option.label}</OptionButton>)}</div>;
-    }
-    if (current.key === 'food') {
+
+    if (key === 'activity') {
+      const icons = { low: <Activity size={24} />, active: <PawPrint size={24} />, very_active: <Zap size={24} /> };
       return (
-        <div className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-3">{weightGoalOptions.map((option) => <OptionButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })}>{option.label}</OptionButton>)}</div>
-          <div className="grid gap-4 sm:grid-cols-3">{foodTypeOptions.map((option) => <OptionButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })}>{option.label}</OptionButton>)}</div>
-          <TextInput value={form.favoriteFlavors} onChange={(e) => update({ favoriteFlavors: e.target.value })} placeholder="Ví dụ: gà, cá ngừ, bò..." />
+        <div className="space-y-4">
+          {activityOptions.map((option) => (
+            <ChoiceButton key={option.value} selected={form.activityLevel === option.value} onClick={() => update({ activityLevel: option.value })} icon={icons[option.value]}>
+              {option.label}
+            </ChoiceButton>
+          ))}
         </div>
       );
     }
-    if (current.key === 'review') {
-      const rows = [
-        ['Tên bé', form.name || 'Chưa có'],
-        ['Giới tính', form.sex === 'female' ? 'Cô bé ngoan' : 'Chú bé ngoan'],
-        ['Tuổi', `${form.ageYears || 0} năm ${form.ageMonths || 0} tháng`],
-        ['Giống mèo', form.breed || 'Chưa rõ'],
-        ['Cân nặng', `${form.weightKg || 0} kg`],
-        ['Dị ứng', form.noAllergies ? 'Không có dị ứng' : form.allergies || 'Chưa ghi nhận'],
-        ['Vấn đề sức khỏe', form.healthIssues || 'Chưa ghi nhận'],
-        ['Khẩu vị thích', form.favoriteFlavors || 'Để AI tự cân bằng'],
-      ];
+
+    if (key === 'weightGoal') {
+      const icons = { gain: <TrendingUp size={24} />, maintain: <Scale size={24} />, lose: <TrendingDown size={24} /> };
       return (
-        <div className="space-y-5">
-          {form.photoUrl ? <img src={form.photoUrl} alt="Ảnh bé mèo" className="mx-auto h-32 w-32 rounded-[24px] object-cover shadow-[0_10px_0_rgba(94,62,130,0.08)]" /> : null}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {rows.map(([label, value]) => (
-              <div key={label} className="rounded-[18px] bg-[#fbf7ff] px-5 py-4 text-left">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9a7bb9]">{label}</p>
-                <p className="mt-1 text-sm font-bold text-[#4d2b63]">{value}</p>
-              </div>
-            ))}
-          </div>
-          <p className="rounded-[18px] bg-[#fff2c7] px-5 py-4 text-sm font-semibold leading-6 text-[#6f4b14]">
-            AI sẽ dùng hồ sơ này để review tình trạng, ước tính calo/ngày, chọn meal kit từ database sản phẩm hiện có và fallback mock nếu dữ liệu chưa đủ.
-          </p>
+        <div className="space-y-4">
+          {weightGoalOptions.map((option) => (
+            <ChoiceButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })} icon={icons[option.value]}>
+              {option.label}
+            </ChoiceButton>
+          ))}
         </div>
       );
     }
+
+    if (key === 'foodType') {
+      const icons = { dry: <Waves size={24} />, wet: <Fish size={24} />, mixed: <Sparkles size={24} /> };
+      return (
+        <div className="space-y-4">
+          {foodTypeOptions.map((option) => (
+            <ChoiceButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })} icon={icons[option.value]}>
+              {option.label}
+            </ChoiceButton>
+          ))}
+        </div>
+      );
+    }
+
+    if (key === 'flavors') {
+      return (
+        <TextField
+          label="Vị đó là gì"
+          value={form.favoriteFlavors}
+          onChange={(event) => update({ favoriteFlavors: event.target.value })}
+          placeholder="Ví dụ: Thịt gà, thịt bò, thịt lợn..."
+        />
+      );
+    }
+
     return (
-      <div className="space-y-5 text-center">
-        {form.photoUrl ? <img src={form.photoUrl} alt="Ảnh bé mèo" className="mx-auto h-44 w-44 rounded-[28px] object-cover shadow-[0_10px_0_rgba(94,62,130,0.08)]" /> : <div className="mx-auto grid h-44 w-44 place-items-center rounded-[28px] bg-[#fbf7ff] text-[#8c5bc4]"><Camera size={46} /></div>}
-        <label className="mx-auto flex h-14 max-w-sm cursor-pointer items-center justify-center gap-3 rounded-[18px] border border-dashed border-[#d8c2ed] bg-[#fbf7ff] text-sm font-bold text-[#765a94]">
-          <Upload size={18} /> {uploadingPhoto ? 'Đang tải ảnh...' : form.photoUrl ? 'Đổi ảnh của bé' : 'Chia sẻ hình ảnh của bé'}
-          <input type="file" accept="image/*" className="sr-only" disabled={uploadingPhoto} onChange={(event) => uploadPhoto(event.target.files?.[0])} />
-        </label>
-        <button type="button" onClick={() => update({ photoUrl: '' })} className="text-xs font-bold text-[#8b7a9f] disabled:opacity-40" disabled={!form.photoUrl}>Bỏ ảnh hiện tại</button>
-      </div>
+      <label className="upload-dropzone grid h-[234px] cursor-pointer place-items-center rounded-[18px] border-4 border-dashed border-[#7d5bff] text-center">
+        <input type="file" accept="image/*" className="sr-only" disabled={uploadingPhoto} onChange={(event) => uploadPhoto(event.target.files?.[0])} />
+        <span>
+          <span className="mx-auto grid h-24 w-24 place-items-center rounded-full border-2 border-[#7d5bff] text-[#6b43ee]">
+            <CloudUpload size={34} />
+          </span>
+          <span className="mt-4 block text-sm font-bold text-[#6b43ee]">
+            {uploadingPhoto ? 'Đang tải ảnh...' : form.photoUrl ? 'Đã tải ảnh lên' : 'Tải ảnh lên hoặc kéo thả'}
+          </span>
+          <span className="mt-1 block text-xs font-semibold text-[#9b96a8]">Tối đa 10MB</span>
+        </span>
+      </label>
     );
   };
 
   return (
-    <section className="relative overflow-hidden bg-[#f4e9ff] px-4 py-8 text-[#4b3a62] sm:py-12">
-      <div className="pointer-events-none absolute left-8 top-24 text-6xl text-white/50">paw</div>
-      <div className="pointer-events-none absolute bottom-16 right-10 text-7xl text-white/60">paw</div>
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-6 rounded-[26px] bg-white px-5 py-4 shadow-[0_14px_0_rgba(94,62,130,0.08)]">
-          <div className="flex items-center justify-between gap-4">
-            <button type="button" onClick={() => navigate('/')} className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f7f1ff] text-[#6d4b8d]"><ArrowLeft size={20} /></button>
-            <div className="flex-1">
-              <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-[0.18em] text-[#9a7bb9]"><span>Meow Quizz</span><span>Giai đoạn {step < 7 ? '1: Hồ sơ' : step < 10 ? '2: Combo' : '3: Hoàn tất'} · BƯỚC {step + 1} TRÊN {steps.length}</span></div>
-              <div className="h-3 overflow-hidden rounded-full bg-[#f1e6fb]"><div className="h-full rounded-full bg-[#f7c64b] transition-all" style={{ width: `${progress}%` }} /></div>
-            </div>
-            <Sparkles className="text-[#f0b83c]" size={26} />
-          </div>
-        </div>
-        <div className="rounded-[34px] bg-white p-6 shadow-[0_18px_0_rgba(94,62,130,0.08)] sm:p-10">
-          <div className="mb-8 text-center">
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#d29a28]">Hồ sơ thú cưng</p>
-            <h1 className="text-3xl font-black text-[#4d2b63] sm:text-5xl">{current.title}</h1>
-            <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-6 text-[#8b7a9f]">{current.hint}</p>
-          </div>
-          <div className="mx-auto max-w-2xl">{renderStep()}</div>
-          <div className="mt-10 flex items-center justify-between gap-4">
-            <button type="button" disabled={step === 0 || saving} onClick={() => setStep((value) => value - 1)} className="flex h-13 items-center gap-2 rounded-full px-5 text-sm font-bold text-[#7c6795] disabled:opacity-40"><ArrowLeft size={18} /> Quay lại</button>
-            <button type="button" disabled={saving} onClick={submit} className="flex h-14 items-center gap-2 rounded-full bg-[#f7c64b] px-7 text-sm font-black text-[#4b3411] shadow-[0_8px_0_#d79d23] transition hover:-translate-y-0.5 disabled:opacity-60">{step === steps.length - 1 ? (saving ? 'Đang tạo hồ sơ...' : 'Xem hồ sơ của bé') : 'Tiếp tục'} <ArrowRight size={18} /></button>
-          </div>
-        </div>
-      </div>
-    </section>
+    <QuizFrame>
+      <StepCard step={step} form={form} onBack={goBack} onNext={submit} nextDisabled={!canContinue()} saving={saving}>
+        {renderStep()}
+      </StepCard>
+    </QuizFrame>
   );
 }
-
