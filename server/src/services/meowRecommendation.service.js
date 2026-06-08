@@ -1,5 +1,10 @@
-﻿const Product = require('../models/Product');
+const Product = require('../models/Product');
 const { streamChatCompletion } = require('./shineshopChat.service');
+const {
+  buildNutritionWarnings,
+  estimateDailyCalories,
+  getNutritionGroundingForPrompt,
+} = require('./meowNutritionKnowledge');
 
 const FALLBACK_PRODUCTS = [
   {
@@ -54,22 +59,20 @@ function mergeCatalogProducts(dbProducts, minimum = 3) {
 }
 
 function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS, source = 'fallback') {
-  const weight = Number(profile.weightKg || 4);
-  const activityFactor = profile.activityLevel === 'very_active' ? 1.25 : profile.activityLevel === 'low' ? 0.9 : 1;
-  const goalFactor = profile.weightGoal === 'gain' ? 1.12 : profile.weightGoal === 'lose' ? 0.88 : 1;
-  const calories = Math.max(120, Math.round(70 * Math.pow(weight, 0.75) * activityFactor * goalFactor));
+  const dailyCalories = estimateDailyCalories(profile);
 
   return {
     source,
     petName: profile.name,
-    dailyCalories: { min: Math.round(calories * 0.9), max: Math.round(calories * 1.1) },
-    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo ${profile.currentFoodType || 'kết hợp'} cân bằng, chuyển đổi thức ăn từ từ trong 7 ngày để hạn chế rối loạn tiêu hóa.`,
+    dailyCalories,
+    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo ${profile.currentFoodType || 'kết hợp'} complete-and-balanced phù hợp giai đoạn sống, theo dõi BCS và chuyển đổi thức ăn từ từ để hạn chế rối loạn tiêu hóa.`,
     feedingPlan: [
       'Chia khẩu phần thành 2-3 bữa mỗi ngày và đo bằng cốc tiêu chuẩn.',
-      'Trộn thức ăn mới tăng dần trong 7 ngày, không đổi khẩu phần quá đột ngột.',
-      'Luôn chuẩn bị nước sạch và theo dõi điểm thể trạng BCS quanh mức 5/9.',
+      'Trộn thức ăn mới tăng dần trong 5-7 ngày, không đổi khẩu phần quá đột ngột.',
+      'Luôn chuẩn bị nước sạch, theo dõi điểm thể trạng BCS quanh mức 4-5/9 và điều chỉnh sau 2-4 tuần.',
+      'Ưu tiên khẩu phần có protein động vật phù hợp, taurine, chất béo cân bằng và không chứa dị nguyên đã khai báo.',
     ],
-    warnings: profile.noAllergies ? [] : (profile.allergies || []).map((item) => `Tránh thành phần: ${item}.`),
+    warnings: buildNutritionWarnings(profile),
     products: products.slice(0, 3).map((product, index) => ({
       productId: product.source === 'db' ? product.id : null,
       fallbackId: product.source === 'fallback' ? product.id : null,
@@ -83,7 +86,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
 }
 
 function buildRecommendationPrompt(profile, products) {
-  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones. JSON fields required: summary, dailyCalories {min,max}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
+  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones.\n${getNutritionGroundingForPrompt()}\nJSON fields required: summary, dailyCalories {min,max,basis}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
 }
 
 function extractJson(text) {

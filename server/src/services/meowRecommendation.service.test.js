@@ -9,6 +9,10 @@ const {
   mergeCatalogProducts,
   normalizeProduct,
 } = require('./meowRecommendation.service');
+const {
+  NUTRITION_REFERENCE_SOURCES,
+  getNutritionGroundingForPrompt,
+} = require('./meowNutritionKnowledge');
 
 const profile = {
   name: 'Pun',
@@ -51,15 +55,40 @@ test('buildRecommendationPrompt includes JSON-only and safety guardrails', () =>
   assert.match(prompt, /Return only valid JSON/);
   assert.match(prompt, /Avoid allergens/);
   assert.match(prompt, /provided catalog/);
+  assert.match(prompt, /Nutrition grounding/);
+  assert.match(prompt, /WSAVA/);
+  assert.match(prompt, /AAFCO/);
+  assert.match(prompt, /FEDIAF/);
+  assert.match(prompt, /NRC/);
+  assert.match(prompt, /complete-and-balanced/i);
+  assert.match(prompt, /BCS/);
+  assert.match(prompt, /taurine/i);
+  assert.match(prompt, /water/i);
+  assert.match(prompt, /veterinary/i);
+});
+
+test('nutrition knowledge pack references the supplied source set', () => {
+  const names = NUTRITION_REFERENCE_SOURCES.map((source) => source.shortName).sort();
+  assert.deepEqual(names, ['AAFCO', 'FEDIAF', 'NRC', 'WSAVA']);
+  const grounding = getNutritionGroundingForPrompt();
+  assert.match(grounding, /WSAVA/);
+  assert.match(grounding, /AAFCO/);
+  assert.match(grounding, /FEDIAF/);
+  assert.match(grounding, /NRC/);
 });
 
 test('buildDeterministicRecommendation returns stable fallback shape', () => {
-  const recommendation = buildDeterministicRecommendation(profile, FALLBACK_PRODUCTS, 'fallback');
+  const recommendation = buildDeterministicRecommendation(
+    { ...profile, healthIssues: ['nôn kéo dài'] },
+    FALLBACK_PRODUCTS,
+    'fallback',
+  );
 
   assert.equal(recommendation.petName, 'Pun');
   assert.equal(recommendation.source, 'fallback');
   assert.ok(recommendation.dailyCalories.min > 0);
   assert.ok(Array.isArray(recommendation.warnings));
+  assert.match(recommendation.warnings.join(' '), /bác sĩ thú y/i);
   assert.ok(Array.isArray(recommendation.products));
 });
 
