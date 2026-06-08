@@ -4,7 +4,7 @@ const { streamChatCompletion } = require('./shineshopChat.service');
 const FALLBACK_PRODUCTS = [
   {
     id: 'fallback-dry-digestion',
-    name: 'PawWorld Hạt khô hỗ trợ tiêu hoá nhạy cảm',
+    name: 'PawWorld Hạt khô hỗ trợ tiêu hóa nhạy cảm',
     price: 189000,
     foodType: 'dry',
     flavor: 'salmon',
@@ -63,7 +63,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
     source,
     petName: profile.name,
     dailyCalories: { min: Math.round(calories * 0.9), max: Math.round(calories * 1.1) },
-    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo ${profile.currentFoodType || 'kết hợp'} cân bằng, chuyển đổi thức ăn từ từ trong 7 ngày để hạn chế rối loạn tiêu hoá.`,
+    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo ${profile.currentFoodType || 'kết hợp'} cân bằng, chuyển đổi thức ăn từ từ trong 7 ngày để hạn chế rối loạn tiêu hóa.`,
     feedingPlan: [
       'Chia khẩu phần thành 2-3 bữa mỗi ngày và đo bằng cốc tiêu chuẩn.',
       'Trộn thức ăn mới tăng dần trong 7 ngày, không đổi khẩu phần quá đột ngột.',

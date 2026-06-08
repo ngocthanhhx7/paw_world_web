@@ -53,7 +53,7 @@ export const petProfileApi = {
     api.post('/customer/pet-profiles/upload-photo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
   update: (id, payload) => api.put(`/customer/pet-profiles/${id}`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/customer/pet-profiles/${id}`).then((r) => r.data),
-  recommend: (id) => api.post(`/customer/pet-profiles/${id}/recommendation`).then((r) => r.data),
+  recommend: (id) => api.post(`/customer/pet-profiles/${id}/recommendation`, undefined, { timeout: 45000 }).then((r) => r.data),
 };
 
 export const adminApi = {

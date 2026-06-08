@@ -20,6 +20,7 @@ import ForgotPasswordPage from '@/pages/public/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/public/auth/ResetPasswordPage';
 import MeowQuizPage from '@/pages/public/meowQuizz/MeowQuizPage';
 import PetProfilesPage from '@/pages/public/meowQuizz/PetProfilesPage';
+import PetProfileDetailPage from '@/pages/public/meowQuizz/PetProfileDetailPage';
 import PetProfileEditPage from '@/pages/public/meowQuizz/PetProfileEditPage';
 import RecommendationPage from '@/pages/public/meowQuizz/RecommendationPage';
 
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/dat-lai-mat-khau/:token" element={<ResetPasswordPage />} />
         <Route path="/meow-quizz" element={<MeowQuizPage />} />
         <Route path="/meow-quizz/ho-so" element={<PetProfilesPage />} />
+        <Route path="/meow-quizz/ho-so/:id" element={<PetProfileDetailPage />} />
         <Route path="/meow-quizz/ho-so/:id/chinh-sua" element={<PetProfileEditPage />} />
         <Route path="/meow-quizz/ket-qua/:profileId" element={<RecommendationPage />} />
         <Route path="*" element={<NotFoundPage />} />

@@ -29,6 +29,7 @@ const steps = [
   { key: 'activity', title: 'Bé có thường xuyên hoạt động không nè?', hint: 'Mức độ vận động sẽ điều chỉnh khẩu phần phù hợp.' },
   { key: 'food', title: 'Khẩu vị và bữa ăn hiện tại của bé?', hint: 'Thông tin cuối để AI tạo meal kit và combo sản phẩm.' },
   { key: 'photo', title: 'Sen muốn chia sẻ hình ảnh của bé không?', hint: 'Ảnh giúp hồ sơ sinh động hơn. Sen có thể bỏ qua nếu chưa có ảnh.' },
+  { key: 'review', title: 'Hồ sơ của bé đã sẵn sàng', hint: 'Kiểm tra nhanh trước khi AI tổng hợp combo thức ăn và chế độ chăm sóc.' },
 ];
 
 function cx(...classes) {
@@ -114,6 +115,7 @@ export default function MeowQuizPage() {
     if (current.key === 'activity') return Boolean(form.activityLevel);
     if (current.key === 'food') return Boolean(form.currentFoodType) && Boolean(form.weightGoal);
     if (current.key === 'photo') return true;
+    if (current.key === 'review') return true;
     return true;
   };
 
@@ -130,9 +132,9 @@ export default function MeowQuizPage() {
     try {
       const data = await petProfileApi.uploadPhoto(formData);
       update({ photoUrl: data.photoUrl });
-      toast.success('?? t?i ?nh c?a b?');
+      toast.success('Đã tải ảnh của bé');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Ch?a t?i ???c ?nh');
+      toast.error(err?.response?.data?.message || 'Chưa tải được ảnh');
     } finally {
       setUploadingPhoto(false);
     }
@@ -159,7 +161,7 @@ export default function MeowQuizPage() {
       sessionStorage.removeItem(DRAFT_KEY);
       sessionStorage.removeItem(RESUME_KEY);
       toast.success('Đã tạo hồ sơ cho bé');
-      navigate(`/meow-quizz/ket-qua/${data.profile._id}`);
+      navigate(`/meow-quizz/ho-so/${data.profile._id}`);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Chưa lưu được hồ sơ');
     } finally {
@@ -217,7 +219,35 @@ export default function MeowQuizPage() {
         <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-3">{weightGoalOptions.map((option) => <OptionButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })}>{option.label}</OptionButton>)}</div>
           <div className="grid gap-4 sm:grid-cols-3">{foodTypeOptions.map((option) => <OptionButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })}>{option.label}</OptionButton>)}</div>
-          <TextInput value={form.favoriteFlavors} onChange={(e) => update({ favoriteFlavors: e.target.value })} placeholder="V? d?: g?, c? ng?, b?..." />
+          <TextInput value={form.favoriteFlavors} onChange={(e) => update({ favoriteFlavors: e.target.value })} placeholder="Ví dụ: gà, cá ngừ, bò..." />
+        </div>
+      );
+    }
+    if (current.key === 'review') {
+      const rows = [
+        ['Tên bé', form.name || 'Chưa có'],
+        ['Giới tính', form.sex === 'female' ? 'Cô bé ngoan' : 'Chú bé ngoan'],
+        ['Tuổi', `${form.ageYears || 0} năm ${form.ageMonths || 0} tháng`],
+        ['Giống mèo', form.breed || 'Chưa rõ'],
+        ['Cân nặng', `${form.weightKg || 0} kg`],
+        ['Dị ứng', form.noAllergies ? 'Không có dị ứng' : form.allergies || 'Chưa ghi nhận'],
+        ['Vấn đề sức khỏe', form.healthIssues || 'Chưa ghi nhận'],
+        ['Khẩu vị thích', form.favoriteFlavors || 'Để AI tự cân bằng'],
+      ];
+      return (
+        <div className="space-y-5">
+          {form.photoUrl ? <img src={form.photoUrl} alt="Ảnh bé mèo" className="mx-auto h-32 w-32 rounded-[24px] object-cover shadow-[0_10px_0_rgba(94,62,130,0.08)]" /> : null}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {rows.map(([label, value]) => (
+              <div key={label} className="rounded-[18px] bg-[#fbf7ff] px-5 py-4 text-left">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9a7bb9]">{label}</p>
+                <p className="mt-1 text-sm font-bold text-[#4d2b63]">{value}</p>
+              </div>
+            ))}
+          </div>
+          <p className="rounded-[18px] bg-[#fff2c7] px-5 py-4 text-sm font-semibold leading-6 text-[#6f4b14]">
+            AI sẽ dùng hồ sơ này để review tình trạng, ước tính calo/ngày, chọn meal kit từ database sản phẩm hiện có và fallback mock nếu dữ liệu chưa đủ.
+          </p>
         </div>
       );
     }
@@ -257,7 +287,7 @@ export default function MeowQuizPage() {
           <div className="mx-auto max-w-2xl">{renderStep()}</div>
           <div className="mt-10 flex items-center justify-between gap-4">
             <button type="button" disabled={step === 0 || saving} onClick={() => setStep((value) => value - 1)} className="flex h-13 items-center gap-2 rounded-full px-5 text-sm font-bold text-[#7c6795] disabled:opacity-40"><ArrowLeft size={18} /> Quay lại</button>
-            <button type="button" disabled={saving} onClick={submit} className="flex h-14 items-center gap-2 rounded-full bg-[#f7c64b] px-7 text-sm font-black text-[#4b3411] shadow-[0_8px_0_#d79d23] transition hover:-translate-y-0.5 disabled:opacity-60">{step === steps.length - 1 ? (saving ? 'Đang tạo hồ sơ...' : 'Nhận gợi ý AI') : 'Tiếp tục'} <ArrowRight size={18} /></button>
+            <button type="button" disabled={saving} onClick={submit} className="flex h-14 items-center gap-2 rounded-full bg-[#f7c64b] px-7 text-sm font-black text-[#4b3411] shadow-[0_8px_0_#d79d23] transition hover:-translate-y-0.5 disabled:opacity-60">{step === steps.length - 1 ? (saving ? 'Đang tạo hồ sơ...' : 'Xem hồ sơ của bé') : 'Tiếp tục'} <ArrowRight size={18} /></button>
           </div>
         </div>
       </div>
