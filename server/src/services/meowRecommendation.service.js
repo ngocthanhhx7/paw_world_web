@@ -1,10 +1,10 @@
-﻿const Product = require('../models/Product');
+const Product = require('../models/Product');
 const { streamChatCompletion } = require('./shineshopChat.service');
 
 const FALLBACK_PRODUCTS = [
   {
     id: 'fallback-dry-digestion',
-    name: 'PawWorld H?t kh? h? tr? ti?u ho? nh?y c?m',
+    name: 'PawWorld Hạt khô hỗ trợ tiêu hoá nhạy cảm',
     price: 189000,
     foodType: 'dry',
     flavor: 'salmon',
@@ -13,7 +13,7 @@ const FALLBACK_PRODUCTS = [
   },
   {
     id: 'fallback-wet-skin-coat',
-    name: 'PawWorld Pate ??t ch?m da v? l?ng',
+    name: 'PawWorld Pate ướt chăm da và lông',
     price: 39000,
     foodType: 'wet',
     flavor: 'tuna',
@@ -22,7 +22,7 @@ const FALLBACK_PRODUCTS = [
   },
   {
     id: 'fallback-mixed-bone',
-    name: 'PawWorld Meal Kit k?t h?p c?n b?ng',
+    name: 'PawWorld Meal Kit kết hợp cân bằng',
     price: 249000,
     foodType: 'mixed',
     flavor: 'chicken',
@@ -63,18 +63,18 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
     source,
     petName: profile.name,
     dailyCalories: { min: Math.round(calories * 0.9), max: Math.round(calories * 1.1) },
-    summary: `${profile.name || 'B? m?o'} n?n b?t ??u v?i combo ${profile.currentFoodType || 'k?t h?p'} c?n b?ng, t?ng chuy?n ??i th?c ?n t? t? trong 7 ng?y ?? h?n ch? r?i lo?n ti?u ho?.`,
+    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo ${profile.currentFoodType || 'kết hợp'} cân bằng, chuyển đổi thức ăn từ từ trong 7 ngày để hạn chế rối loạn tiêu hoá.`,
     feedingPlan: [
-      'Chia kh?u ph?n th?nh 2-3 b?a m?i ng?y v? ?o b?ng c?c ti?u chu?n.',
-      'Tr?n th?c ?n m?i t?ng d?n trong 7 ng?y, kh?ng ??i kh?u ph?n qu? ??t ng?t.',
-      'Lu?n chu?n b? n??c s?ch v? theo d?i ?i?m th? tr?ng BCS quanh m?c 5/9.',
+      'Chia khẩu phần thành 2-3 bữa mỗi ngày và đo bằng cốc tiêu chuẩn.',
+      'Trộn thức ăn mới tăng dần trong 7 ngày, không đổi khẩu phần quá đột ngột.',
+      'Luôn chuẩn bị nước sạch và theo dõi điểm thể trạng BCS quanh mức 5/9.',
     ],
-    warnings: profile.noAllergies ? [] : (profile.allergies || []).map((item) => `Tr?nh th?nh ph?n: ${item}.`),
+    warnings: profile.noAllergies ? [] : (profile.allergies || []).map((item) => `Tránh thành phần: ${item}.`),
     products: products.slice(0, 3).map((product, index) => ({
       productId: product.source === 'db' ? product.id : null,
       fallbackId: product.source === 'fallback' ? product.id : null,
       name: product.name,
-      reason: index === 0 ? 'S?n ph?m ch?nh ph? h?p nh?t v?i h? s? hi?n t?i.' : 'S?n ph?m b? tr? gi?p kh?u ph?n ?a d?ng v? d? duy tr?.',
+      reason: index === 0 ? 'Sản phẩm chính phù hợp nhất với hồ sơ hiện tại.' : 'Sản phẩm bổ trợ giúp khẩu phần đa dạng và dễ duy trì.',
       price: product.price,
       image: product.image || '',
       foodType: product.foodType,
@@ -130,5 +130,3 @@ module.exports = {
   buildDeterministicRecommendation,
   buildRecommendationForProfile,
 };
-
-
