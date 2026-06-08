@@ -214,10 +214,20 @@ export default function MeowQuizPage() {
     if (current.key === 'food') {
       return (
         <div className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-3">{weightGoalOptions.map((option) => <OptionButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })}>{option.label}</OptionButton>)}</div>
-        <div className="grid gap-4 sm:grid-cols-3">{foodTypeOptions.map((option) => <OptionButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })}>{option.label}</OptionButton>)}</div>
-        <TextInput value={form.favoriteFlavors} onChange={(e) => update({ favoriteFlavors: e.target.value })} placeholder="Ví dụ: gà, cá ngừ, bò..." />
-        <button type="button" onClick={() => toast('Tính năng đang phát triển')} className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] border border-dashed border-[#d8c2ed] bg-[#fbf7ff] text-sm font-bold text-[#765a94]"><Camera size={18} /> Chia sẻ hình ảnh của bé</button>
+          <div className="grid gap-4 sm:grid-cols-3">{weightGoalOptions.map((option) => <OptionButton key={option.value} selected={form.weightGoal === option.value} onClick={() => update({ weightGoal: option.value })}>{option.label}</OptionButton>)}</div>
+          <div className="grid gap-4 sm:grid-cols-3">{foodTypeOptions.map((option) => <OptionButton key={option.value} selected={form.currentFoodType === option.value} onClick={() => update({ currentFoodType: option.value })}>{option.label}</OptionButton>)}</div>
+          <TextInput value={form.favoriteFlavors} onChange={(e) => update({ favoriteFlavors: e.target.value })} placeholder="V? d?: g?, c? ng?, b?..." />
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-5 text-center">
+        {form.photoUrl ? <img src={form.photoUrl} alt="?nh b? m?o" className="mx-auto h-44 w-44 rounded-[28px] object-cover shadow-[0_10px_0_rgba(94,62,130,0.08)]" /> : <div className="mx-auto grid h-44 w-44 place-items-center rounded-[28px] bg-[#fbf7ff] text-[#8c5bc4]"><Camera size={46} /></div>}
+        <label className="mx-auto flex h-14 max-w-sm cursor-pointer items-center justify-center gap-3 rounded-[18px] border border-dashed border-[#d8c2ed] bg-[#fbf7ff] text-sm font-bold text-[#765a94]">
+          <Upload size={18} /> {uploadingPhoto ? '?ang t?i ?nh...' : form.photoUrl ? '??i ?nh c?a b?' : 'Chia s? h?nh ?nh c?a b?'}
+          <input type="file" accept="image/*" className="sr-only" disabled={uploadingPhoto} onChange={(event) => uploadPhoto(event.target.files?.[0])} />
+        </label>
+        <button type="button" onClick={() => update({ photoUrl: '' })} className="text-xs font-bold text-[#8b7a9f] disabled:opacity-40" disabled={!form.photoUrl}>B? ?nh hi?n t?i</button>
       </div>
     );
   };

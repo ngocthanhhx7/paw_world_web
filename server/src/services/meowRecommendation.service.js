@@ -83,7 +83,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
 }
 
 function buildRecommendationPrompt(profile, products) {
-  return `B?n l? chuy?n gia dinh d??ng m?o cho PawWorld. Tr? v? duy nh?t JSON h?p l?, kh?ng markdown. H?y t?o combo meal kit c? nh?n ho? b?ng ti?ng Vi?t d?a tr?n h? s? m?o v? ch? ch?n s?n ph?m trong catalog. Kh?ng kh?ng ??nh ?i?u tr? b?nh, kh?ng khuy?n ?? s?ng/x??ng, tr?nh d? ?ng. JSON c?n c?: summary, dailyCalories {min,max}, feedingPlan array, warnings array, products array v?i productId/fallbackId/name/reason/price/image/foodType.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
+  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones. JSON fields required: summary, dailyCalories {min,max}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
 }
 
 function extractJson(text) {
