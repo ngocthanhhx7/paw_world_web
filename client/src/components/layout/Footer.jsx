@@ -5,14 +5,14 @@ import toast from 'react-hot-toast';
 import { leadApi } from '@/api/endpoints';
 
 const PRODUCT_LINKS = [
-  { label: 'Meal Kit Cá Nhân Hóa', to: '/lien-he-tu-van' },
+  { label: 'Meal Kit Cá Nhân Hóa', to: '/meow-quizz' },
   { label: 'Meal Kit cho mèo con', to: '/danh-muc/thuc-an-hat-mem' },
   { label: 'Meal Kit cho mèo lớn', to: '/danh-muc/hat-kho-cho-meo' },
   { label: 'Phụ Kiện Chăm Sóc', to: '/danh-muc/phu-kien-an-uong' },
 ];
 
 const SUPPORT_LINKS = [
-  { label: 'Meow Quizz', to: '/lien-he-tu-van#meow-quizz' },
+  { label: 'Meow Quizz', to: '/meow-quizz' },
   { label: 'Về chúng tôi', to: '/gioi-thieu' },
   { label: 'Liên hệ tư vấn', to: '/lien-he-tu-van' },
   { label: 'Chính sách vận chuyển', to: '/chinh-sach-van-chuyen' },
