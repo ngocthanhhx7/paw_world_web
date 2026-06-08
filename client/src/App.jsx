@@ -14,6 +14,10 @@ import OrderSuccessPage from '@/pages/public/OrderSuccessPage';
 import ContactRequestPage from '@/pages/public/ContactRequestPage';
 import OrderTrackingPage from '@/pages/public/OrderTrackingPage';
 import NotFoundPage from '@/pages/public/NotFoundPage';
+import LoginPage from '@/pages/public/auth/LoginPage';
+import RegisterPage from '@/pages/public/auth/RegisterPage';
+import ForgotPasswordPage from '@/pages/public/auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/public/auth/ResetPasswordPage';
 
 import AdminLoginPage from '@/pages/admin/AdminLoginPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
@@ -25,15 +29,18 @@ import RequireAdmin from '@/components/admin/RequireAdmin';
 
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
+import { useCustomerAuthStore } from '@/store/customerAuthStore';
 
 export default function App() {
   const fetchCart = useCartStore((s) => s.fetch);
   const initAuth = useAuthStore((s) => s.init);
+  const initCustomerAuth = useCustomerAuthStore((s) => s.init);
 
   useEffect(() => {
     fetchCart();
     initAuth();
-  }, [fetchCart, initAuth]);
+    initCustomerAuth();
+  }, [fetchCart, initAuth, initCustomerAuth]);
 
   return (
     <Routes>
@@ -49,6 +56,10 @@ export default function App() {
         <Route path="/dat-hang-thanh-cong/:code" element={<OrderSuccessPage />} />
         <Route path="/lien-he-tu-van" element={<ContactRequestPage />} />
         <Route path="/tra-cuu-don-hang" element={<OrderTrackingPage />} />
+        <Route path="/dang-nhap" element={<LoginPage />} />
+        <Route path="/dang-ky" element={<RegisterPage />} />
+        <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />
+        <Route path="/dat-lai-mat-khau/:token" element={<ResetPasswordPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
