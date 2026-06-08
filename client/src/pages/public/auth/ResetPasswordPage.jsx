@@ -1,21 +1,30 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { customerAuthApi } from '@/api/endpoints';
+
 import AuthShell from './AuthShell';
-import { AuthInput } from './LoginPage';
+import { PasswordInput, PrimaryButton } from './LoginPage';
+import { useCustomerAuthStore } from '@/store/customerAuthStore';
 
 export default function ResetPasswordPage() {
   const { token } = useParams();
   const navigate = useNavigate();
-  const [password, setPassword] = useState('');
+  const resetPassword = useCustomerAuthStore((s) => s.resetPassword);
+  const [form, setForm] = useState({ password: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const submit = async (event) => {
     event.preventDefault();
+    if (form.password !== form.confirmPassword) {
+      toast.error('Mat khau xac nhan khong khop');
+      return;
+    }
+
     setLoading(true);
     try {
-      await customerAuthApi.resetPassword(token, { password });
+      await resetPassword({ token, password: form.password });
       toast.success('Da dat lai mat khau');
       navigate('/dang-nhap', { replace: true });
     } catch (err) {
@@ -26,17 +35,38 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <AuthShell
-      title="Dat lai mat khau"
-      subtitle="Chon mat khau moi cho tai khoan PawWorld."
-      footer={<Link className="text-cocoa-700 underline" to="/dang-nhap">Quay lai dang nhap</Link>}
-    >
+    <AuthShell title={<>Dat lai<br />mat khau</>}>
       <form onSubmit={submit} className="space-y-5">
-        <AuthInput label="Mat khau moi" type="password" value={password} onChange={setPassword} />
-        <button disabled={loading} className="w-full rounded-full bg-sun-400 px-6 py-3 text-sm font-extrabold uppercase tracking-[0.08em] text-cocoa-700 shadow-[0_8px_0_#d9a72d] transition hover:-translate-y-0.5 disabled:opacity-60">
-          {loading ? 'Dang luu...' : 'Dat lai mat khau'}
-        </button>
+        <div>
+          <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">
+            Mat khau moi
+          </label>
+          <PasswordInput
+            value={form.password}
+            show={showPassword}
+            onToggle={() => setShowPassword((value) => !value)}
+            onChange={(password) => setForm((value) => ({ ...value, password }))}
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.03em] text-[#252020]">
+            Xac nhan mat khau
+          </label>
+          <PasswordInput
+            value={form.confirmPassword}
+            show={showConfirm}
+            onToggle={() => setShowConfirm((value) => !value)}
+            onChange={(confirmPassword) => setForm((value) => ({ ...value, confirmPassword }))}
+          />
+        </div>
+        <PrimaryButton loading={loading}>Luu mat khau</PrimaryButton>
       </form>
+
+      <p className="mt-7 text-center text-[12px] font-semibold text-[#6c5d50]">
+        <Link className="font-extrabold uppercase text-[#a95620] underline" to="/dang-nhap">
+          Quay lai dang nhap
+        </Link>
+      </p>
     </AuthShell>
   );
 }

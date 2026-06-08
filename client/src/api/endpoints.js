@@ -1,4 +1,4 @@
-import api from './client';
+﻿import api from './client';
 
 export const productApi = {
   list: (params) => api.get('/products', { params }).then((r) => r.data),
@@ -41,8 +41,8 @@ export const customerAuthApi = {
   logout: () => api.post('/auth/customer/logout').then((r) => r.data),
   forgotPassword: (payload) =>
     api.post('/auth/customer/forgot-password', payload).then((r) => r.data),
-  resetPassword: (token, payload) =>
-    api.post(`/auth/customer/reset-password/${token}`, payload).then((r) => r.data),
+  resetPassword: (payload) =>
+    api.post('/auth/customer/reset-password', payload).then((r) => r.data),
 };
 
 export const petProfileApi = {
@@ -84,3 +84,6 @@ export const adminApi = {
   // stats
   overview: () => api.get('/admin/stats/overview').then((r) => r.data),
 };
+
+
+
