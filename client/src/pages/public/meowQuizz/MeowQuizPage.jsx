@@ -27,7 +27,8 @@ const steps = [
   { key: 'health', title: 'Bé có vấn đề sức khỏe nào không nè?', hint: 'Ghi ngắn gọn các tình trạng đang quan tâm.' },
   { key: 'goals', title: 'Sen đang có mục tiêu sức khỏe nào cho bé?', hint: 'Có thể chọn nhiều mục tiêu cùng lúc.' },
   { key: 'activity', title: 'Bé có thường xuyên hoạt động không nè?', hint: 'Mức độ vận động sẽ điều chỉnh khẩu phần phù hợp.' },
-  { key: 'food', title: 'Khẩu vị và bữa ăn hiện tại của bé?', hint: 'Bước cuối để AI tạo meal kit và combo sản phẩm.' },
+  { key: 'food', title: 'Khẩu vị và bữa ăn hiện tại của bé?', hint: 'Thông tin cuối để AI tạo meal kit và combo sản phẩm.' },
+  { key: 'photo', title: 'Sen muốn chia sẻ hình ảnh của bé không?', hint: 'Ảnh giúp hồ sơ sinh động hơn. Sen có thể bỏ qua nếu chưa có ảnh.' },
 ];
 
 function cx(...classes) {
@@ -222,12 +223,12 @@ export default function MeowQuizPage() {
     }
     return (
       <div className="space-y-5 text-center">
-        {form.photoUrl ? <img src={form.photoUrl} alt="?nh b? m?o" className="mx-auto h-44 w-44 rounded-[28px] object-cover shadow-[0_10px_0_rgba(94,62,130,0.08)]" /> : <div className="mx-auto grid h-44 w-44 place-items-center rounded-[28px] bg-[#fbf7ff] text-[#8c5bc4]"><Camera size={46} /></div>}
+        {form.photoUrl ? <img src={form.photoUrl} alt="Ảnh bé mèo" className="mx-auto h-44 w-44 rounded-[28px] object-cover shadow-[0_10px_0_rgba(94,62,130,0.08)]" /> : <div className="mx-auto grid h-44 w-44 place-items-center rounded-[28px] bg-[#fbf7ff] text-[#8c5bc4]"><Camera size={46} /></div>}
         <label className="mx-auto flex h-14 max-w-sm cursor-pointer items-center justify-center gap-3 rounded-[18px] border border-dashed border-[#d8c2ed] bg-[#fbf7ff] text-sm font-bold text-[#765a94]">
-          <Upload size={18} /> {uploadingPhoto ? '?ang t?i ?nh...' : form.photoUrl ? '??i ?nh c?a b?' : 'Chia s? h?nh ?nh c?a b?'}
+          <Upload size={18} /> {uploadingPhoto ? 'Đang tải ảnh...' : form.photoUrl ? 'Đổi ảnh của bé' : 'Chia sẻ hình ảnh của bé'}
           <input type="file" accept="image/*" className="sr-only" disabled={uploadingPhoto} onChange={(event) => uploadPhoto(event.target.files?.[0])} />
         </label>
-        <button type="button" onClick={() => update({ photoUrl: '' })} className="text-xs font-bold text-[#8b7a9f] disabled:opacity-40" disabled={!form.photoUrl}>B? ?nh hi?n t?i</button>
+        <button type="button" onClick={() => update({ photoUrl: '' })} className="text-xs font-bold text-[#8b7a9f] disabled:opacity-40" disabled={!form.photoUrl}>Bỏ ảnh hiện tại</button>
       </div>
     );
   };
@@ -241,7 +242,7 @@ export default function MeowQuizPage() {
           <div className="flex items-center justify-between gap-4">
             <button type="button" onClick={() => navigate('/')} className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f7f1ff] text-[#6d4b8d]"><ArrowLeft size={20} /></button>
             <div className="flex-1">
-              <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-[0.18em] text-[#9a7bb9]"><span>Meow Quizz</span><span>BƯỚC {step + 1} TRÊN {steps.length}</span></div>
+              <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-[0.18em] text-[#9a7bb9]"><span>Meow Quizz</span><span>Giai đoạn {step < 7 ? '1: Hồ sơ' : step < 10 ? '2: Combo' : '3: Hoàn tất'} · BƯỚC {step + 1} TRÊN {steps.length}</span></div>
               <div className="h-3 overflow-hidden rounded-full bg-[#f1e6fb]"><div className="h-full rounded-full bg-[#f7c64b] transition-all" style={{ width: `${progress}%` }} /></div>
             </div>
             <Sparkles className="text-[#f0b83c]" size={26} />
@@ -263,3 +264,4 @@ export default function MeowQuizPage() {
     </section>
   );
 }
+
