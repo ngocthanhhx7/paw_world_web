@@ -2,6 +2,8 @@ import { Fragment } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Check, Search, ShoppingCart, UserRound } from 'lucide-react';
 
+import { useCustomerAuthStore } from '@/store/customerAuthStore';
+
 const stepItems = [
   { label: 'Thú cưng của bạn', path: '/meow-quizz', activeOn: ['/meow-quizz', '/meow-quizz/ho-so'] },
   { label: 'Thực đơn', path: '/meow-quizz/ket-qua', activeOn: ['/meow-quizz/ket-qua'] },
@@ -39,8 +41,8 @@ function StepLabel({ item, index, activeStep, compact = false }) {
     <span
       className={
         completed || active
-          ? `${compact ? 'text-[12px]' : 'text-sm'} whitespace-nowrap text-center font-semibold leading-tight text-[#ffb800]`
-          : `${compact ? 'text-[12px]' : 'text-sm'} whitespace-nowrap text-center font-semibold leading-tight text-[#b8b4bd]`
+          ? `${compact ? 'max-w-[74px] text-[12px] whitespace-normal' : 'text-sm whitespace-nowrap'} text-center font-semibold leading-tight text-[#ffb800]`
+          : `${compact ? 'max-w-[74px] text-[12px] whitespace-normal' : 'text-sm whitespace-nowrap'} text-center font-semibold leading-tight text-[#b8b4bd]`
       }
     >
       {item.label}
@@ -54,14 +56,15 @@ function StepLine({ highlighted = false, compact = false }) {
 
 export default function MeowQuizzLayout() {
   const { pathname } = useLocation();
+  const customer = useCustomerAuthStore((s) => s.customer);
   const activeStep = getActiveStep(pathname);
 
   return (
     <div className="min-h-screen bg-[#fffefa] text-[#26222e]">
       <header className="sticky top-0 z-40 border-b border-[#eeeaf2] bg-white">
-        <div className="grid h-20 grid-cols-[300px_1fr_220px] items-center px-12 max-lg:grid-cols-[1fr_auto] max-lg:px-5 max-sm:h-[68px] max-sm:px-4">
-          <Link to="/" className="inline-flex items-center" aria-label="PawWorld">
-            <img src="/assets/logo/ngang.png" alt="PawWorld" className="h-[42px] w-auto max-sm:h-9" />
+        <div className="grid h-20 grid-cols-[300px_1fr_220px] items-center px-12 max-lg:grid-cols-[minmax(0,1fr)_auto] max-lg:px-5 max-sm:h-[68px] max-sm:px-4">
+          <Link to="/" className="inline-flex min-w-0 items-center" aria-label="PawWorld">
+            <img src="/assets/logo/ngang.png" alt="PawWorld" className="h-[42px] w-auto max-w-full max-sm:h-9" />
           </Link>
 
           <nav
@@ -81,8 +84,8 @@ export default function MeowQuizzLayout() {
             })}
           </nav>
 
-          <div className="flex items-center justify-end gap-5 text-[#181616] max-sm:gap-3">
-            <Link to="/dang-nhap" aria-label="Tài khoản" className="grid h-8 w-8 place-items-center">
+          <div className="flex shrink-0 items-center justify-end gap-5 text-[#181616] max-sm:gap-2">
+            <Link to={customer ? '/meow-quizz/ho-so' : '/dang-nhap'} aria-label="Tài khoản" className="grid h-8 w-8 place-items-center">
               <UserRound size={22} strokeWidth={2.6} />
             </Link>
             <Link to="/danh-muc" aria-label="Tìm kiếm" className="grid h-8 w-8 place-items-center">

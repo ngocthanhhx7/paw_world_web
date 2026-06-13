@@ -13,7 +13,7 @@ function activityLabel(value) {
   return activityOptions.find((option) => option.value === value)?.label || 'năng động';
 }
 
-function ProfileCard({ profile, onDelete }) {
+function ProfileCard({ profile, onDelete, onCreateCombo }) {
   return (
     <article className="relative h-[462px] w-[354px] rounded-[26px] border-2 border-[#d7d0bf] bg-white p-6 shadow-[0_16px_30px_rgba(39,34,46,0.08)]">
       <div className="absolute left-4 top-4 z-10 flex gap-2">
@@ -24,6 +24,13 @@ function ProfileCard({ profile, onDelete }) {
           <Trash2 size={16} />
         </button>
       </div>
+      <button
+        type="button"
+        onClick={onCreateCombo}
+        className="absolute right-4 top-4 z-10 h-10 rounded-full bg-[#ffca2d] px-4 text-sm font-extrabold text-[#1f1b26]"
+      >
+        Tạo combo
+      </button>
 
       <div className="h-[298px] overflow-hidden rounded-[24px] bg-[#d9d0c2]">
         <img src={profile.photoUrl || fallbackCat} alt={profile.name} className="h-full w-full object-cover" />
@@ -124,8 +131,6 @@ export default function PetProfilesPage() {
     toast.success('Đã xoá hồ sơ');
   };
 
-  const primaryProfile = profiles[0];
-
   return (
     <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] px-16 py-16 text-[#1d1a22] max-lg:px-5">
       <div className="pointer-events-none absolute -left-12 top-28 hidden h-[250px] w-[250px] -rotate-[26deg] opacity-[0.08] lg:block">
@@ -137,22 +142,21 @@ export default function PetProfilesPage() {
       <div className="mx-auto mt-14 flex max-w-[1152px] items-start gap-14 max-lg:flex-wrap max-lg:justify-center">
         {loading ? <div className="rounded-2xl bg-white px-8 py-6 font-bold">Đang tải hồ sơ...</div> : null}
         {!loading && profiles.length === 0 ? <AddCard /> : null}
-        {!loading && profiles.map((profile) => <ProfileCard key={profile._id} profile={profile} onDelete={() => setDeleting(profile)} />)}
+        {!loading && profiles.map((profile) => (
+          <ProfileCard
+            key={profile._id}
+            profile={profile}
+            onDelete={() => setDeleting(profile)}
+            onCreateCombo={() => navigate(`/meow-quizz/ket-qua/${profile._id}`)}
+          />
+        ))}
         {!loading && profiles.length > 0 ? <AddCard /> : null}
       </div>
 
-      <div className="mx-auto mt-12 flex max-w-[1152px] items-center justify-between max-sm:flex-col max-sm:gap-5">
+      <div className="mx-auto mt-12 flex max-w-[1152px] items-center justify-start max-sm:flex-col max-sm:gap-5">
         <button type="button" onClick={() => navigate('/meow-quizz')} className="inline-flex h-[52px] min-w-[172px] items-center justify-center gap-3 rounded-full border-2 border-[#d6d0c3] bg-white text-base font-bold text-[#817b74]">
           <ArrowLeft size={20} />
           Trở lại
-        </button>
-        <button
-          type="button"
-          disabled={!primaryProfile}
-          onClick={() => primaryProfile && navigate(`/meow-quizz/ket-qua/${primaryProfile._id}`)}
-          className="h-[52px] min-w-[226px] rounded-full bg-[#ffca2d] text-base font-extrabold text-[#1f1b26] disabled:opacity-45"
-        >
-          Tiếp tục
         </button>
       </div>
 

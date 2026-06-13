@@ -48,6 +48,7 @@ const productSchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false },
     isBestSeller: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    isAiComboOnly: { type: Boolean, default: false, index: true },
 
     // Metric
     rating: { type: Number, default: 5, min: 0, max: 5 },

@@ -13,6 +13,7 @@ export const cartApi = {
   get: () => api.get('/cart').then((r) => r.data),
   add: (productId, quantity = 1) =>
     api.post('/cart/items', { productId, quantity }).then((r) => r.data),
+  addCombo: (payload) => api.post('/cart/combo-items', payload).then((r) => r.data),
   update: (productId, quantity) =>
     api.put('/cart/items', { productId, quantity }).then((r) => r.data),
   remove: (productId) => api.delete(`/cart/items/${productId}`).then((r) => r.data),
@@ -53,7 +54,7 @@ export const petProfileApi = {
     api.post('/customer/pet-profiles/upload-photo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data),
   update: (id, payload) => api.put(`/customer/pet-profiles/${id}`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/customer/pet-profiles/${id}`).then((r) => r.data),
-  recommend: (id) => api.post(`/customer/pet-profiles/${id}/recommendation`, undefined, { timeout: 45000 }).then((r) => r.data),
+  recommend: (id, payload = {}) => api.post(`/customer/pet-profiles/${id}/recommendation`, payload, { timeout: 45000 }).then((r) => r.data),
 };
 
 export const adminApi = {

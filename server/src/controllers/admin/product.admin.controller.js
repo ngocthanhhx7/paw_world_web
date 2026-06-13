@@ -5,14 +5,28 @@ function buildImageUrl(req, file) {
   return `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
 }
 
-function normalizeProductData(data) {
-  if (data.tags && typeof data.tags === 'string') {
-    data.tags = data.tags.split(',').map((t) => t.trim()).filter(Boolean);
-  }
+function normalizeArray(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (typeof value === 'string') return value.split(',').map((item) => item.trim()).filter(Boolean);
+  return value;
+}
 
-  if (data.healthNeeds && typeof data.healthNeeds === 'string') {
-    data.healthNeeds = data.healthNeeds.split(',').map((t) => t.trim()).filter(Boolean);
-  }
+function parseBoolean(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return value;
+  const normalized = value.trim().toLowerCase();
+  if (['true', '1', 'on', 'yes'].includes(normalized)) return true;
+  if (['false', '0', 'off', 'no', ''].includes(normalized)) return false;
+  return value;
+}
+
+function normalizeProductData(data) {
+  data.tags = normalizeArray(data.tags);
+  data.healthNeeds = normalizeArray(data.healthNeeds);
+
+  ['isFeatured', 'isBestSeller', 'isActive', 'isAiComboOnly'].forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(data, field)) data[field] = parseBoolean(data[field]);
+  });
 
   if (data.salePrice === '' || data.salePrice === null) data.salePrice = null;
   if (data.foodType === '') data.foodType = 'dry';
@@ -40,6 +54,8 @@ exports.list = async (req, res) => {
 
   res.json({ items, pagination: { page: pageNum, limit: limitNum, total } });
 };
+
+exports.normalizeProductData = normalizeProductData;
 
 exports.getById = async (req, res) => {
   const product = await Product.findById(req.params.id).populate('category', 'name slug');

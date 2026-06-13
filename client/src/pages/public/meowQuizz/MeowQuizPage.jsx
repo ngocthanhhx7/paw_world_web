@@ -33,6 +33,8 @@ import {
 
 const DRAFT_KEY = 'paw_meow_quizz_draft';
 const RESUME_KEY = 'paw_meow_quizz_resume';
+const MAX_PHOTO_SIZE_MB = 5;
+const MAX_PHOTO_SIZE_BYTES = MAX_PHOTO_SIZE_MB * 1024 * 1024;
 
 const visualSteps = [
   {
@@ -101,14 +103,14 @@ function titleFor(step, form) {
 
 function QuizFrame({ children }) {
   return (
-    <section className="meow-quiz-bg relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#f3ddff] px-5 py-[86px]">
+    <section className="meow-quiz-bg relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#f3ddff] px-5 py-[86px] max-sm:px-4 max-sm:py-16">
       <div className="pointer-events-none absolute left-[-18px] top-[112px] hidden h-[252px] w-[252px] -rotate-[26deg] opacity-30 lg:block">
         <PawPrint className="h-full w-full fill-[#cdb6df] text-[#cdb6df]" strokeWidth={0.4} />
       </div>
       <div className="pointer-events-none absolute right-[-28px] bottom-[72px] hidden h-[172px] w-[172px] rotate-[28deg] opacity-30 lg:block">
         <PawPrint className="h-full w-full fill-[#cdb6df] text-[#cdb6df]" strokeWidth={0.4} />
       </div>
-      <div className="relative z-10 mx-auto max-w-[602px]">{children}</div>
+      <div className="relative z-10 mx-auto w-[calc(100vw-32px)] min-w-0 max-w-[602px] sm:w-full">{children}</div>
     </section>
   );
 }
@@ -132,7 +134,7 @@ function PrimaryButton({ children, disabled, onClick }) {
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="mt-8 h-[58px] w-full rounded-full bg-[#ffca2d] text-lg font-semibold text-[#5a5261] transition hover:bg-[#ffc11d] disabled:cursor-not-allowed disabled:opacity-55"
+      className="mt-8 h-[58px] w-full min-w-0 rounded-full bg-[#ffca2d] px-4 text-lg font-semibold text-[#5a5261] transition hover:bg-[#ffc11d] disabled:cursor-not-allowed disabled:opacity-55"
     >
       {children}
     </button>
@@ -180,13 +182,13 @@ function ChoiceButton({ selected, children, icon, onClick, className }) {
       type="button"
       onClick={onClick}
       className={cx(
-        'flex min-h-[80px] w-full items-center gap-4 rounded-[10px] px-7 text-left text-lg font-semibold transition',
+        'flex min-h-[80px] w-full min-w-0 items-center gap-4 rounded-[10px] px-7 text-left text-lg font-semibold transition max-sm:px-4',
         selected ? 'border-2 border-[#b9bfff] bg-[#fffdf3]' : 'border-2 border-transparent bg-[#f0eff8]',
         className,
       )}
     >
-      {icon ? <span className="text-[#a98dff]">{icon}</span> : null}
-      <span>{children}</span>
+      {icon ? <span className="shrink-0 text-[#a98dff]">{icon}</span> : null}
+      <span className="min-w-0 break-words">{children}</span>
     </button>
   );
 }
@@ -211,10 +213,10 @@ function SquareChoice({ selected, label, icon, onClick }) {
 
 function StepCard({ step, form, onBack, onNext, nextDisabled, children, saving }) {
   return (
-    <div className="meow-quiz-card rounded-[30px] bg-white px-12 py-12 max-sm:px-6">
+    <div className="meow-quiz-card w-full min-w-0 rounded-[30px] bg-white px-12 py-12 max-sm:px-4">
       <StepBadge step={step} onBack={onBack} />
-      <h1 className="crayon text-center text-[30px] leading-tight text-[#25232b]">{titleFor(visualSteps[step], form)}</h1>
-      <p className="mx-auto mt-5 max-w-[510px] text-center text-base leading-6 text-[#5f5968]">
+      <h1 className="crayon break-words text-center text-[30px] leading-tight text-[#25232b] max-sm:text-[27px]">{titleFor(visualSteps[step], form)}</h1>
+      <p className="mx-auto mt-5 max-w-[510px] break-words text-center text-base leading-6 text-[#5f5968]">
         {visualSteps[step].description}
       </p>
       <div className="mt-10">{children}</div>
@@ -289,6 +291,14 @@ export default function MeowQuizPage() {
 
   const uploadPhoto = async (file) => {
     if (!file) return;
+    if (file.size > MAX_PHOTO_SIZE_BYTES) {
+      toast.error(`Ảnh tối đa ${MAX_PHOTO_SIZE_MB}MB`);
+      return;
+    }
+    if (!customer) {
+      update({ photoUrl: '' });
+      return;
+    }
     setUploadingPhoto(true);
     try {
       const formData = new FormData();
@@ -351,7 +361,7 @@ export default function MeowQuizPage() {
               selected={form.sex === 'male'}
               onClick={() => update({ sex: 'male' })}
               icon={<PawPrint size={22} />}
-              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base"
+              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base max-sm:whitespace-normal"
             >
               Tên cậu bé mèo là...
             </ChoiceButton>
@@ -359,7 +369,7 @@ export default function MeowQuizPage() {
               selected={form.sex === 'female'}
               onClick={() => update({ sex: 'female' })}
               icon={<HeartPulse size={22} />}
-              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base"
+              className="h-[68px] min-h-0 justify-center whitespace-nowrap px-4 text-base max-sm:whitespace-normal"
             >
               Tên cô bé mèo là...
             </ChoiceButton>
@@ -499,7 +509,7 @@ export default function MeowQuizPage() {
           <span className="mt-4 block text-sm font-bold text-[#6b43ee]">
             {uploadingPhoto ? 'Đang tải ảnh...' : form.photoUrl ? 'Đã tải ảnh lên' : 'Tải ảnh lên hoặc kéo thả'}
           </span>
-          <span className="mt-1 block text-xs font-semibold text-[#9b96a8]">Tối đa 10MB</span>
+          <span className="mt-1 block text-xs font-semibold text-[#9b96a8]">Tối đa {MAX_PHOTO_SIZE_MB}MB</span>
         </span>
       </label>
     );

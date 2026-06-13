@@ -49,8 +49,11 @@ export function splitList(value) {
 }
 
 export function normalizeQuizPayload(form) {
+  const photoUrl = String(form.photoUrl || '').startsWith('blob:') ? '' : form.photoUrl;
+
   return {
     ...form,
+    photoUrl,
     ageYears: Number(form.ageYears || 0),
     ageMonths: Number(form.ageMonths || 0),
     weightKg: Number(form.weightKg || 0),

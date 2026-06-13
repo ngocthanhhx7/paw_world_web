@@ -8,6 +8,11 @@ import { useCartStore } from '@/store/cartStore';
 import { formatPrice } from '@/utils/format';
 
 const productFallback = '/assets/paw/Cat Food Kit.png';
+const durationOptions = [
+  { durationDays: 1, label: '1 ngày' },
+  { durationDays: 7, label: '7 ngày' },
+  { durationDays: 30, label: '30 ngày' },
+];
 
 function pickProducts(recommendation) {
   return recommendation?.products || recommendation?.recommendedProducts || [];
@@ -20,6 +25,20 @@ function getProductId(product) {
 function isDbProduct(product) {
   const id = getProductId(product);
   return id && !String(id).startsWith('fallback');
+}
+
+function getProductQuantity(product) {
+  const quantity = Number(product?.quantity || product?.qty || product?.recommendedQuantity || 1);
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+}
+
+function foodTypeLabel(value) {
+  const labels = {
+    dry: 'thức ăn khô',
+    wet: 'thức ăn ướt',
+    mixed: 'combo khô và ướt',
+  };
+  return labels[value] || value || 'meal kit';
 }
 
 function caloriesText(value) {
@@ -120,14 +139,17 @@ function Footer() {
 export default function RecommendationPage() {
   const { profileId } = useParams();
   const navigate = useNavigate();
-  const addToCart = useCartStore((s) => s.addToCart);
+  const addCombo = useCartStore((s) => s.addCombo);
+  const [selectedDurationDays, setSelectedDurationDays] = useState(null);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
+    if (!selectedDurationDays) return;
     let active = true;
-    petProfileApi.recommend(profileId)
+    setLoading(true);
+    petProfileApi.recommend(profileId, { durationDays: selectedDurationDays })
       .then((response) => {
         if (active) setData(response);
       })
@@ -140,26 +162,39 @@ export default function RecommendationPage() {
     return () => {
       active = false;
     };
-  }, [profileId]);
+  }, [profileId, selectedDurationDays]);
 
   const profile = data?.profile;
   const recommendation = data?.recommendation || profile?.aiSummary || {};
   const products = pickProducts(recommendation);
   const primaryProduct = products[0] || {};
+  const catDisplayName = profile?.name || recommendation.petName || 'bé mèo';
+  const primaryFoodType = foodTypeLabel(primaryProduct.foodType || recommendation.foodType || profile?.currentFoodType);
+  const feedingPlan = Array.isArray(recommendation.feedingPlan) ? recommendation.feedingPlan : [];
+  const mainFeedingText = feedingPlan[0]?.amount || feedingPlan[0]?.description || `${primaryFoodType} theo khẩu phần khuyến nghị`;
+  const cartableProducts = products.filter(isDbProduct);
   const total = useMemo(() => {
-    const productTotal = products.reduce((sum, product) => sum + Number(product.price || product.finalPrice || 0), 0);
-    return productTotal || 450000;
-  }, [products]);
+    const explicitTotal = Number(recommendation.total || recommendation.totalPrice || recommendation.estimatedTotal || 0);
+    if (explicitTotal > 0 && cartableProducts.length === products.length) return explicitTotal;
+    return cartableProducts.reduce((sum, product) => sum + Number(product.price || product.finalPrice || 0) * getProductQuantity(product), 0);
+  }, [cartableProducts, products.length, recommendation.estimatedTotal, recommendation.total, recommendation.totalPrice]);
 
   const checkout = async () => {
-    const dbProducts = products.filter(isDbProduct);
-    if (!dbProducts.length) {
+    if (!cartableProducts.length || cartableProducts.length !== products.length) {
+      toast.error('Combo hiện chưa có sản phẩm trong danh mục, mời sen chọn sản phẩm phù hợp.');
       navigate('/danh-muc');
       return;
     }
     setAdding(true);
     try {
-      await addToCart(getProductId(dbProducts[0]), 1);
+      await addCombo({
+        items: cartableProducts.map((product) => ({
+          productId: getProductId(product),
+          quantity: getProductQuantity(product),
+        })),
+        profileId,
+        durationDays: selectedDurationDays,
+      });
       navigate('/thanh-toan');
     } catch {
       toast.error('Chưa thêm được combo vào giỏ hàng');
@@ -167,6 +202,34 @@ export default function RecommendationPage() {
       setAdding(false);
     }
   };
+
+  if (!selectedDurationDays) {
+    return (
+      <section className="grid min-h-[calc(100vh-80px)] place-items-center bg-[#fffefa] px-4 py-12 text-[#33303c]">
+        <div className="w-full max-w-[760px] rounded-[30px] bg-[#edd3ff] px-8 py-10 text-center shadow-[0_15px_28px_rgba(39,34,46,0.12)]">
+          <h1 className="crayon text-[46px] leading-none text-[#2f1464]">Chọn thời lượng combo</h1>
+          <p className="mx-auto mt-5 max-w-[520px] text-base font-semibold leading-7 text-[#716878]">
+            PawWorld sẽ tạo thực đơn theo số ngày sen muốn chuẩn bị cho bé.
+          </p>
+          <div className="mt-8 grid grid-cols-3 gap-4 max-sm:grid-cols-1">
+            {durationOptions.map((option) => (
+              <button
+                key={option.durationDays}
+                type="button"
+                onClick={() => setSelectedDurationDays(option.durationDays)}
+                className="h-20 rounded-[18px] bg-white text-xl font-extrabold text-[#2f1464] shadow-[0_10px_22px_rgba(39,34,46,0.08)] transition hover:bg-[#fff7d8]"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Link to="/meow-quizz/ho-so" className="mt-8 inline-flex text-sm font-extrabold text-[#6b43ee]">
+            Quay lại hồ sơ
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   if (loading) {
     return (
@@ -187,12 +250,12 @@ export default function RecommendationPage() {
         <section className="grid min-h-[376px] grid-cols-[1fr_420px] items-center gap-8 rounded-[30px] bg-[#edd3ff] px-10 py-8 max-lg:grid-cols-1">
           <div>
             <h1 className="crayon text-[50px] leading-[0.95] text-[#2f1464]">
-              Thực đơn của {profile.name || 'Milo'}
+              Thực đơn của {catDisplayName}
               <br />
               đã sẵn sàng!
             </h1>
             <p className="mt-8 max-w-[520px] text-base font-semibold leading-7 text-[#716878]">
-              {recommendation.summary || `Dựa trên thông tin về ${profile.name}, chúng tôi đã thiết kế một công thức dinh dưỡng khoa học giúp bé phát triển toàn diện và luôn khỏe mạnh.`}
+              {recommendation.summary || `Dựa trên thông tin về ${catDisplayName}, chúng tôi đã thiết kế combo ${selectedDurationDays} ngày giúp bé có khẩu phần phù hợp hơn.`}
             </p>
             <button type="button" onClick={checkout} className="mt-8 h-14 w-[204px] rounded-full bg-[#ffca2d] font-extrabold text-[#6a4a00]">
               Đặt hàng ngay
@@ -217,7 +280,7 @@ export default function RecommendationPage() {
 
         <h2 className="crayon mt-16 text-center text-[42px] leading-none text-[#25222b]">Lợi ích dinh dưỡng vượt trội</h2>
         <div className="mt-9 grid grid-cols-3 gap-6 max-lg:grid-cols-1">
-          <BenefitCard icon={<Leaf size={24} />} tone="coral" title="Không ngũ cốc" body={`Công thức đặc biệt giúp giảm nguy cơ dị ứng và hỗ trợ hệ tiêu hóa nhạy cảm của ${profile.name}.`} />
+          <BenefitCard icon={<Leaf size={24} />} tone="coral" title="Không ngũ cốc" body={`Công thức đặc biệt giúp giảm nguy cơ dị ứng và hỗ trợ hệ tiêu hóa nhạy cảm của ${catDisplayName}.`} />
           <BenefitCard icon={<Bone size={24} />} tone="purple" title="Khớp khỏe mạnh" body="Bổ sung Glucosamine và Chondroitin để duy trì sự linh hoạt và sức mạnh của khung xương." />
           <BenefitCard icon={<Zap size={24} />} tone="mint" title="Cho mèo năng động" body="Cung cấp nguồn năng lượng sạch từ đạm động vật chất lượng cao cho các hoạt động hằng ngày." />
         </div>
@@ -253,14 +316,14 @@ export default function RecommendationPage() {
         <section className="mt-14 grid overflow-hidden rounded-[28px] border border-[#e8e4ee] bg-white lg:grid-cols-2">
           <div className="p-12">
             <h3 className="text-2xl font-extrabold">Phân bổ khẩu phần</h3>
-            <p className="mt-6 max-w-[360px] text-sm font-semibold leading-6 text-[#77717e]">Kết hợp hoàn hảo giữa thức ăn hạt và Pate để tối ưu hóa lượng nước và dinh dưỡng.</p>
+            <p className="mt-6 max-w-[360px] text-sm font-semibold leading-6 text-[#77717e]">Combo {selectedDurationDays} ngày ưu tiên {primaryFoodType} dựa trên sản phẩm được gợi ý.</p>
             <div className="mt-10 space-y-7">
               <div className="flex items-start justify-between gap-6">
                 <span className="flex gap-4">
                   <span className="mt-1 h-3 w-3 rounded-full bg-[#6b43ee]" />
                   <span>
-                    <strong className="block">Thức ăn khô (Hạt)</strong>
-                    <span className="text-sm font-semibold text-[#77717e]">53g / ngày (khoảng 1 bát đầy)</span>
+                    <strong className="block">{primaryFoodType}</strong>
+                    <span className="text-sm font-semibold text-[#77717e]">{mainFeedingText}</span>
                   </span>
                 </span>
                 <strong>100%</strong>
@@ -269,8 +332,8 @@ export default function RecommendationPage() {
                 <span className="flex gap-4">
                   <span className="mt-1 h-3 w-3 rounded-full bg-[#e1dfe8]" />
                   <span>
-                    <strong className="block text-[#77717e]">Thức ăn ướt (Pate)</strong>
-                    <span className="text-sm font-semibold">Hiện tại không khuyến nghị cho Pun</span>
+                    <strong className="block text-[#77717e]">Sản phẩm bổ sung</strong>
+                    <span className="text-sm font-semibold">{feedingPlan[1]?.description || `Hiện chưa có gợi ý bổ sung riêng cho ${catDisplayName}`}</span>
                   </span>
                 </span>
                 <strong>0%</strong>
@@ -278,7 +341,7 @@ export default function RecommendationPage() {
             </div>
             <div className="mt-8 flex gap-3 rounded-[18px] bg-[#f4efff] p-5 text-sm font-bold leading-6 text-[#6b43ee]">
               <Info className="shrink-0" size={18} />
-              Hãy luôn cung cấp đủ nước sạch cho Pun. Khẩu phần có thể điều chỉnh sau 5-12 tuần tùy thuộc vào cân nặng thực tế.
+              Hãy luôn cung cấp đủ nước sạch cho {catDisplayName}. Khẩu phần có thể điều chỉnh sau {selectedDurationDays} ngày tùy thuộc vào cân nặng thực tế.
             </div>
           </div>
           <div className="grid place-items-center bg-[#eeedf6] p-12">

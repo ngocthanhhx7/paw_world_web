@@ -51,6 +51,18 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
+  addCombo: async (payload) => {
+    set({ loading: true });
+    try {
+      const data = await cartApi.addCombo(payload);
+      set({ cart: data });
+      writeLocal(data);
+      return data;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   updateQuantity: async (productId, quantity) => {
     const data = await cartApi.update(productId, quantity);
     set({ cart: data });

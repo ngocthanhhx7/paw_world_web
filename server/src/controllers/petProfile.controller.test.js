@@ -5,6 +5,7 @@ const {
   buildOwnedProfileQuery,
   normalizeArray,
   normalizeProfilePayload,
+  parseRecommendationDurationDays,
 } = require('./petProfile.controller');
 
 test('buildOwnedProfileQuery scopes profile id to customer id', () => {
@@ -31,4 +32,12 @@ test('normalizeProfilePayload trims strings and applies defaults', () => {
   assert.equal(payload.currentFoodType, 'mixed');
   assert.deepEqual(payload.allergies, ['fish', 'shrimp']);
   assert.deepEqual(payload.healthGoals, ['digestion', 'teeth']);
+});
+
+test('parseRecommendationDurationDays accepts only supported combo durations', () => {
+  assert.equal(parseRecommendationDurationDays({ durationDays: 1 }), 1);
+  assert.equal(parseRecommendationDurationDays({ durationDays: '7' }), 7);
+  assert.equal(parseRecommendationDurationDays({ durationDays: 30 }), 30);
+  assert.throws(() => parseRecommendationDurationDays({ durationDays: 2 }), /durationDays/);
+  assert.throws(() => parseRecommendationDurationDays({ durationDays: null }), /durationDays/);
 });

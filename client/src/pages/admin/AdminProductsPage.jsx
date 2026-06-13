@@ -24,7 +24,29 @@ const EMPTY = {
   isFeatured: false,
   isBestSeller: false,
   isActive: true,
+  isAiComboOnly: false,
 };
+
+const PRODUCT_FORM_FIELDS = [
+  'name',
+  'brand',
+  'category',
+  'price',
+  'salePrice',
+  'stock',
+  'weight',
+  'flavor',
+  'ageRange',
+  'foodType',
+  'healthNeeds',
+  'shortDescription',
+  'description',
+  'tags',
+  'isFeatured',
+  'isBestSeller',
+  'isActive',
+  'isAiComboOnly',
+];
 
 const FOOD_TYPE_OPTIONS = [
   { value: 'dry', label: 'Đồ ăn khô' },
@@ -83,6 +105,7 @@ export default function AdminProductsPage() {
       foodType: p.foodType || 'dry',
       healthNeeds: (p.healthNeeds || []).join(', '),
       salePrice: p.salePrice ?? '',
+      isAiComboOnly: Boolean(p.isAiComboOnly),
     });
     setImageFile(null);
   };
@@ -93,10 +116,10 @@ export default function AdminProductsPage() {
     setSubmitting(true);
     try {
       const fd = new FormData();
-      Object.entries(editing).forEach(([k, v]) => {
-        if (k === '_id') return;
+      PRODUCT_FORM_FIELDS.forEach((field) => {
+        const v = editing[field];
         if (v === null || v === undefined) return;
-        fd.append(k, typeof v === 'boolean' ? String(v) : v);
+        fd.append(field, typeof v === 'boolean' ? String(v) : v);
       });
       if (imageFile) fd.append('image', imageFile);
 
@@ -199,6 +222,11 @@ export default function AdminProductsPage() {
                               {HEALTH_NEED_OPTIONS.find((option) => option.value === need)?.label || need}
                             </span>
                           ))}
+                          {p.isAiComboOnly ? (
+                            <span className="rounded-full bg-coral-50 px-2 py-0.5 text-[11px] text-coral-600">
+                              AI combo
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -430,6 +458,14 @@ export default function AdminProductsPage() {
                     onChange={(e) => setEditing({ ...editing, isActive: e.target.checked })}
                   />
                   Đang bán
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editing.isAiComboOnly}
+                    onChange={(e) => setEditing({ ...editing, isAiComboOnly: e.target.checked })}
+                  />
+                  Chỉ dùng cho AI combo
                 </span>
               </label>
             </div>

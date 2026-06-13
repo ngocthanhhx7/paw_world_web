@@ -14,3 +14,9 @@ test('MeowQuizzLayout renders the shared screenshot stepper shell', () => {
   assert.doesNotMatch(source, /ChatbotWidget/);
   assert.doesNotMatch(source, /Meow Quizz progress[^]*max-lg:hidden/);
 });
+
+test('MeowQuizzLayout routes account icon by customer auth state', () => {
+  assert.match(source, /useCustomerAuthStore/);
+  assert.match(source, /const customer = useCustomerAuthStore\(\(s\) => s\.customer\)/);
+  assert.match(source, /to=\{customer \? '\/meow-quizz\/ho-so' : '\/dang-nhap'\}/);
+});

@@ -23,7 +23,7 @@ exports.list = async (req, res) => {
     limit = 12,
   } = req.query;
 
-  const filter = { isActive: true };
+  const filter = { isActive: true, isAiComboOnly: { $ne: true } };
   if (q) filter.name = { $regex: q, $options: 'i' };
   if (brand) filter.brand = brand;
   if (featured === 'true') filter.isFeatured = true;
@@ -83,7 +83,7 @@ exports.list = async (req, res) => {
 
 exports.getBySlug = async (req, res) => {
   const product = await Product.findOneAndUpdate(
-    { slug: req.params.slug, isActive: true },
+    { slug: req.params.slug, isActive: true, isAiComboOnly: { $ne: true } },
     { $inc: { viewCount: 1 } },
     { new: true },
   ).populate('category', 'name slug');
@@ -95,6 +95,7 @@ exports.getBySlug = async (req, res) => {
     _id: { $ne: product._id },
     category: product.category?._id,
     isActive: true,
+    isAiComboOnly: { $ne: true },
   })
     .limit(8)
     .populate('category', 'name slug');

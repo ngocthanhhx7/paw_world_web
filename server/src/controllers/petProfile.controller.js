@@ -35,6 +35,16 @@ function normalizeProfilePayload(body) {
   };
 }
 
+function parseRecommendationDurationDays(body = {}) {
+  const durationDays = Number(body.durationDays);
+  if (![1, 7, 30].includes(durationDays)) {
+    const error = new Error('durationDays must be one of 1, 7, or 30');
+    error.statusCode = 400;
+    throw error;
+  }
+  return durationDays;
+}
+
 async function list(req, res) {
   const profiles = await PetProfile.find({ customer: req.customer._id }).sort({ updatedAt: -1 });
   res.json({ profiles });
@@ -77,7 +87,8 @@ async function recommendation(req, res) {
   const profile = await PetProfile.findOne(buildOwnedProfileQuery(req.params.id, req.customer._id));
   if (!profile) return res.status(404).json({ message: 'Không tìm thấy hồ sơ thú cưng' });
 
-  const aiSummary = await buildRecommendationForProfile(profile);
+  const durationDays = parseRecommendationDurationDays(req.body);
+  const aiSummary = await buildRecommendationForProfile(profile, { durationDays });
   profile.aiSummary = aiSummary;
   await profile.save();
 
@@ -89,6 +100,7 @@ module.exports = {
   normalizeArray,
   buildImageUrl,
   normalizeProfilePayload,
+  parseRecommendationDurationDays,
   list,
   create,
   get,
