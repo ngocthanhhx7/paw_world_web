@@ -78,7 +78,7 @@ export default function OrderSuccessPage() {
           <Link to="/danh-muc" className="btn-primary">
             <Package size={16} /> Tiếp tục mua sắm
           </Link>
-          <a href="tel:0909123456" className="btn-outline">
+          <a href="tel:0772211666" className="btn-outline">
             <Phone size={16} /> Liên hệ hỗ trợ
           </a>
         </div>

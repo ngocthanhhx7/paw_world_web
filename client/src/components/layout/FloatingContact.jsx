@@ -17,10 +17,10 @@ export default function FloatingContact() {
         <MessageCircle size={18} /> Tư vấn miễn phí
       </Link>
       <a
-        href="tel:0909123456"
+        href="tel:0772211666"
         className="flex items-center gap-2 bg-cocoa-500 text-cream-50 px-4 py-3 rounded-full shadow-soft font-semibold hover:-translate-y-0.5 transition"
       >
-        <Phone size={18} /> 0909.123.456
+        <Phone size={18} /> 0772.211.666
       </a>
     </div>
   );

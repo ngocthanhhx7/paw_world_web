@@ -43,3 +43,12 @@ test('RecommendationPage keeps route visuals while replacing hardcoded profile d
   assert.doesNotMatch(source, /Milo/);
   assert.doesNotMatch(source, /Pun/);
 });
+
+test('RecommendationPage displays server-normalized package quantity details', () => {
+  assert.match(source, /function quantityDetailText\(product\)/);
+  assert.match(source, /product\?\.packageLabel/);
+  assert.match(source, /product\?\.quantityBasis/);
+  assert.match(source, /product\?\.estimatedDaysCovered/);
+  assert.match(source, /product\?\.servingNote/);
+  assert.match(source, /Số lượng trong combo/);
+});

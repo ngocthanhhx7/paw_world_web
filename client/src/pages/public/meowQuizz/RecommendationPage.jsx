@@ -32,6 +32,17 @@ function getProductQuantity(product) {
   return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
 }
 
+function quantityDetailText(product) {
+  const quantity = getProductQuantity(product);
+  if (product?.quantityBasis === 'manual_review') {
+    return `Số lượng trong combo: ${quantity} sản phẩm - cần kiểm tra định lượng`;
+  }
+  const packageLabel = product?.packageLabel ? ` x ${product.packageLabel}` : '';
+  const coveredDays = Number(product?.estimatedDaysCovered);
+  const coveredText = Number.isFinite(coveredDays) && coveredDays > 0 ? `, ước tính đủ ${coveredDays} ngày` : '';
+  return `Số lượng trong combo: ${quantity}${packageLabel}${coveredText}`;
+}
+
 function foodTypeLabel(value) {
   const labels = {
     dry: 'thức ăn khô',
@@ -351,6 +362,36 @@ export default function RecommendationPage() {
                 <p className="mt-4 text-2xl font-extrabold">100% Khô</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="mt-14 rounded-[28px] border border-[#e8e4ee] bg-white p-8">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-extrabold uppercase tracking-wide text-[#77717e]">Combo {selectedDurationDays} ngày</p>
+              <h3 className="mt-2 text-2xl font-extrabold">Sản phẩm AI gợi ý</h3>
+            </div>
+            <span className="rounded-full bg-[#fff4c3] px-4 py-2 text-sm font-extrabold text-[#6a4a00]">
+              Định lượng từ tên/gói sản phẩm
+            </span>
+          </div>
+
+          <div className="mt-7 grid gap-4">
+            {products.map((product, index) => (
+              <article key={getProductId(product) || product.fallbackId || product.name || index} className="grid gap-4 rounded-[18px] border border-[#eeeaf2] bg-[#fffefa] p-5 md:grid-cols-[88px_1fr_auto] md:items-center">
+                <img src={product.image || productFallback} alt={product.name || 'Meal kit'} className="h-[88px] w-[88px] rounded-[16px] object-cover" />
+                <div>
+                  <h4 className="font-extrabold text-[#33303c]">{product.name || 'Meal kit PawWorld'}</h4>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[#77717e]">{product.reason}</p>
+                  <p className="mt-3 text-sm font-extrabold text-[#6b43ee]">{quantityDetailText(product)}</p>
+                  {product?.servingNote ? <p className="mt-1 text-xs font-bold text-[#8c8794]">{product.servingNote}</p> : null}
+                </div>
+                <div className="text-left md:text-right">
+                  <p className="text-xs font-extrabold uppercase text-[#9a94a3]">Tạm tính</p>
+                  <p className="mt-1 text-lg font-extrabold">{formatPrice(Number(product.price || product.finalPrice || 0) * getProductQuantity(product))}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 

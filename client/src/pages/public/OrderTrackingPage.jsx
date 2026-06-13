@@ -122,7 +122,7 @@ export default function OrderTrackingPage() {
             <Link to="/danh-muc" className="btn-outline">
               Tiếp tục mua sắm
             </Link>
-            <a href="tel:0909123456" className="btn-primary">
+            <a href="tel:0772211666" className="btn-primary">
               Liên hệ hỗ trợ
             </a>
           </div>

@@ -133,7 +133,7 @@ export default function PetProfileEditPage() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] pb-28 pt-10 text-[#25222b]">
+    <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-10 text-[#25222b]">
       <div className="pointer-events-none absolute -left-16 top-28 hidden h-[240px] w-[240px] opacity-[0.08] lg:block">
         <img src="/assets/icon/khac/pets.svg" alt="" className="h-full w-full" />
       </div>
@@ -226,7 +226,9 @@ export default function PetProfileEditPage() {
           </Field>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#eff1ff] px-4 py-5">
+        <div className="edit-profile-bottom-spacer h-28" aria-hidden="true" />
+
+        <div className="edit-profile-action-bar fixed bottom-0 left-0 right-0 z-40 bg-[#eff1ff] px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5">
           <div className="mx-auto flex max-w-[624px] items-center justify-center gap-12">
             <button type="button" onClick={() => navigate('/meow-quizz/ho-so')} className="h-14 min-w-[160px] rounded-full text-base font-extrabold">
               Hủy bỏ

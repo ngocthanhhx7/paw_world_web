@@ -8,6 +8,8 @@ const {
   buildRecommendationPrompt,
   mergeCatalogProducts,
   normalizeProduct,
+  parsePackageQuantity,
+  resolveRecommendationQuantity,
 } = require('./meowRecommendation.service');
 const {
   NUTRITION_REFERENCE_SOURCES,
@@ -31,13 +33,66 @@ test('normalizeProduct maps db product fields to recommendation catalog', () => 
     salePrice: 90000,
     images: ['image.jpg'],
     foodType: 'dry',
+    weight: '1.5kg',
     healthNeeds: ['digestion'],
   });
 
   assert.equal(product.id, 'product-id');
   assert.equal(product.price, 90000);
   assert.equal(product.image, 'image.jpg');
+  assert.equal(product.weight, '1.5kg');
   assert.equal(product.source, 'db');
+});
+
+test('parsePackageQuantity reads package size from weight before product name', () => {
+  assert.deepEqual(parsePackageQuantity({ name: 'Hat kho goi 1kg', weight: '1.5kg' }), {
+    sourceText: '1.5kg',
+    packageLabel: '1.5kg',
+    basis: 'weight_grams',
+    amountGrams: 1500,
+    daysPerUnit: null,
+  });
+
+  assert.deepEqual(parsePackageQuantity({ name: 'Pate 6x85g', weight: '' }), {
+    sourceText: 'Pate 6x85g',
+    packageLabel: '6 x 85g',
+    basis: 'weight_grams',
+    amountGrams: 510,
+    daysPerUnit: null,
+  });
+});
+
+test('parsePackageQuantity handles multi-pack, ml, and day packages', () => {
+  assert.equal(parsePackageQuantity({ weight: '12 goi x 80g' }).amountGrams, 960);
+  assert.equal(parsePackageQuantity({ weight: '4 tuyp x 15g' }).amountGrams, 60);
+  assert.equal(parsePackageQuantity({ weight: '200ml' }).amountGrams, 200);
+  assert.deepEqual(parsePackageQuantity({ weight: '7 ngay' }), {
+    sourceText: '7 ngay',
+    packageLabel: '7 ngày',
+    basis: 'duration_days',
+    amountGrams: null,
+    daysPerUnit: 7,
+  });
+});
+
+test('resolveRecommendationQuantity scales packages by selected duration', () => {
+  const dryProduct = { name: 'Hat kho 1kg', weight: '1kg', foodType: 'dry' };
+  const wetProduct = { name: 'Pate 12 goi x 80g', weight: '12 goi x 80g', foodType: 'wet' };
+  const dayProduct = { name: 'Kit 7 ngay', weight: '7 ngay', foodType: 'mixed' };
+
+  assert.equal(resolveRecommendationQuantity(dryProduct, profile, 1).quantity, 1);
+  assert.equal(resolveRecommendationQuantity(dryProduct, profile, 30).quantity, 2);
+  assert.equal(resolveRecommendationQuantity(wetProduct, profile, 7).quantity, 2);
+  assert.equal(resolveRecommendationQuantity(dayProduct, profile, 30).quantity, 5);
+});
+
+test('resolveRecommendationQuantity marks unknown packages for manual review', () => {
+  const result = resolveRecommendationQuantity({ name: 'Mystery Food', foodType: 'dry' }, profile, 30);
+
+  assert.equal(result.quantity, 1);
+  assert.equal(result.quantityBasis, 'manual_review');
+  assert.equal(result.packageLabel, '');
+  assert.match(result.servingNote, /kiểm tra/i);
 });
 
 test('mergeCatalogProducts uses db products first then fallback catalog', () => {
@@ -98,6 +153,7 @@ test('buildDeterministicRecommendation returns stable fallback shape', () => {
   assert.ok(Array.isArray(recommendation.products));
   assert.equal(recommendation.products[0].quantity, 1);
   assert.equal(recommendation.products[0].daysCovered, 30);
+  assert.equal(recommendation.products[0].quantityBasis, 'manual_review');
 });
 
 test('normalizeProduct maps skin_coat db health need to recommendation skin scoring value', () => {
@@ -215,8 +271,9 @@ test('buildRecommendationForProfile reconciles AI product display fields to cata
                 price: 120000,
                 salePrice: 99000,
                 image: 'catalog.jpg',
-                foodType: 'wet',
-              },
+            foodType: 'wet',
+            weight: '80g',
+          },
             ],
           };
         },
@@ -253,6 +310,8 @@ test('buildRecommendationForProfile reconciles AI product display fields to cata
   assert.equal(recommendation.products[0].image, 'catalog.jpg');
   assert.equal(recommendation.products[0].foodType, 'wet');
   assert.equal(recommendation.products[0].reason, 'AI selected this item.');
-  assert.equal(recommendation.products[0].quantity, 4);
+  assert.equal(recommendation.products[0].quantity, 82);
   assert.equal(recommendation.products[0].daysCovered, 30);
+  assert.equal(recommendation.products[0].packageLabel, '80g');
+  assert.equal(recommendation.products[0].quantityBasis, 'weight_grams');
 });

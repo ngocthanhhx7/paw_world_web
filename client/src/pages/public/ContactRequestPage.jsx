@@ -4,8 +4,8 @@ import {
   CircleHelp,
   Mail,
   MapPin,
+  Phone,
   Search,
-  Share2,
   ShoppingBasket,
   Sparkles,
   Truck,
@@ -126,9 +126,9 @@ const contactBlocks = [
     iconClass: 'bg-[#EE9FBD] text-white',
   },
   {
-    label: 'KẾT NỐI',
-    value: 'Facebook Instagram TikTok',
-    Icon: Share2,
+    label: 'HOTLINE',
+    value: '0772211666',
+    Icon: Phone,
     iconClass: 'bg-[#BFC4F2] text-[#3F2A6B]',
   },
 ];
