@@ -12,6 +12,37 @@ const KCAL_PER_GRAM_BY_FOOD_TYPE = {
   mixed: 2.4,
 };
 
+const PRODUCT_ROLE_PRIORITY = {
+  base: 0,
+  wet: 1,
+  support: 2,
+  treat: 3,
+};
+
+const TREAT_ROLE_TERMS = [
+  'snack',
+  'treat',
+  'thuong',
+  'banh thuong',
+  'sup thuong',
+  'soup thuong',
+  'tuyp',
+  'tube',
+  'thanh sup',
+  'churu',
+];
+
+const WET_ROLE_TERMS = ['pate', 'sot', 'gravy', 'mousse', 'sup', 'soup', 'lon', 'wet'];
+
+const HEALTH_TERM_MAP = {
+  digestion: ['digestion', 'tieu hoa', 'duong ruot', 'tieu chay', 'bao ve tieu hoa'],
+  skin: ['skin', 'da long', 'long muot', 'cham soc da', 'nam da', 'rung long'],
+  hairball: ['hairball', 'bui long', 'long', 'catnip'],
+  mother: ['mother', 'meo me', 'mang thai', 'cho con bu', 'kitten'],
+  bone: ['bone', 'xuong', 'khop', 'calcium', 'canxi'],
+  teeth: ['teeth', 'rang', 'nha khoa', 'dental'],
+};
+
 const FALLBACK_PRODUCTS = [
   {
     id: 'fallback-dry-digestion',
@@ -45,6 +76,7 @@ const FALLBACK_PRODUCTS = [
 function normalizeProduct(product) {
   const object = typeof product.toObject === 'function' ? product.toObject({ virtuals: true }) : product;
   const healthNeeds = Array.isArray(object.healthNeeds) ? object.healthNeeds.map(normalizeHealthNeed) : [];
+  const tags = Array.isArray(object.tags) ? object.tags.map((tag) => String(tag).trim()).filter(Boolean) : [];
   return {
     id: String(object._id || object.id),
     name: object.name,
@@ -56,6 +88,7 @@ function normalizeProduct(product) {
     ageRange: object.ageRange || 'all',
     healthNeeds,
     ingredients: object.ingredients || '',
+    tags,
     isAiComboOnly: object.isAiComboOnly === true,
     source: 'db',
   };
@@ -73,6 +106,52 @@ function normalizeQuantityText(value) {
     .replace(/,/g, '.')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function productSearchText(product = {}) {
+  return normalizeQuantityText([
+    product.name,
+    product.foodType,
+    product.flavor,
+    product.ingredients,
+    ...(Array.isArray(product.tags) ? product.tags : []),
+    ...(Array.isArray(product.healthNeeds) ? product.healthNeeds : []),
+  ].filter(Boolean).join(' '));
+}
+
+function classifyProductRole(product = {}) {
+  const text = productSearchText(product);
+  if (TREAT_ROLE_TERMS.some((term) => text.includes(term))) return 'treat';
+  if (product.foodType === 'dry') return 'base';
+  if (product.foodType === 'wet' || product.foodType === 'mixed') return 'wet';
+  if (WET_ROLE_TERMS.some((term) => text.includes(term))) return 'wet';
+  return 'support';
+}
+
+function getProfileLifeStage(profile = {}) {
+  const totalMonths = (Number(profile.ageYears || 0) * 12) + Number(profile.ageMonths || 0);
+  if (totalMonths && totalMonths < 12) return 'kitten';
+  if (Number(profile.ageYears || 0) >= 7) return 'senior';
+  return 'adult';
+}
+
+function scoreAgeRange(product = {}, profile = {}) {
+  const stage = getProfileLifeStage(profile);
+  const ageRange = product.ageRange || 'all';
+  if (ageRange === stage) return 6;
+  if (ageRange === 'all') return 3;
+  return -8;
+}
+
+function profileHealthTerms(profile = {}) {
+  const goals = [...(profile.healthGoals || []), ...(profile.healthIssues || [])].map(normalizeHealthNeed);
+  const terms = [];
+  for (const goal of goals) {
+    const normalizedGoal = normalizeQuantityText(goal);
+    terms.push(normalizedGoal);
+    if (HEALTH_TERM_MAP[normalizedGoal]) terms.push(...HEALTH_TERM_MAP[normalizedGoal]);
+  }
+  return terms.filter(Boolean);
 }
 
 function parseNumber(value) {
@@ -213,10 +292,16 @@ function productMatchesAllergy(product, allergies = []) {
 function scoreProduct(product, profile = {}) {
   const goals = [...(profile.healthGoals || []), ...(profile.healthIssues || [])].map(normalizeHealthNeed);
   const flavors = profile.favoriteFlavors || [];
+  const text = productSearchText(product);
+  const healthTerms = profileHealthTerms(profile);
   let score = product.isAiComboOnly ? 4 : 0;
+  score += scoreAgeRange(product, profile);
   if (profile.currentFoodType && ['mixed', product.foodType].includes(profile.currentFoodType)) score += 2;
   if (product.healthNeeds.some((need) => goals.includes(need))) score += 3;
+  if (healthTerms.some((term) => term && text.includes(term))) score += 3;
   if (flavors.some((flavor) => String(product.flavor).toLowerCase().includes(String(flavor).toLowerCase()))) score += 1;
+  if (profile.weightGoal === 'lose' && classifyProductRole(product) === 'wet') score += 2;
+  if (profile.weightGoal === 'gain' && classifyProductRole(product) === 'base') score += 1;
   return score;
 }
 
@@ -231,6 +316,51 @@ function mixAiOnlyAndPublicProducts(products) {
   return mixed;
 }
 
+function sortProductsForProfile(products, profile = {}) {
+  return [...products].sort((a, b) => {
+    const scoreDelta = scoreProduct(b, profile) - scoreProduct(a, profile);
+    if (scoreDelta) return scoreDelta;
+    const roleDelta = PRODUCT_ROLE_PRIORITY[a.productRole] - PRODUCT_ROLE_PRIORITY[b.productRole];
+    if (roleDelta) return roleDelta;
+    return Number(a.price || 0) - Number(b.price || 0);
+  });
+}
+
+function selectBalancedCatalogProducts(products = [], desiredCount = 3, profile = {}) {
+  const count = Math.max(1, Number(desiredCount) || 3);
+  const enriched = products
+    .filter((product) => product?.name)
+    .map((product) => ({
+      ...product,
+      productRole: product.productRole || classifyProductRole(product),
+    }));
+  const selected = [];
+  const seen = new Set();
+
+  function addProduct(product) {
+    if (!product || selected.length >= count) return;
+    const key = `${product.source || 'db'}:${product.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    selected.push(product);
+  }
+
+  function bestByRole(role) {
+    return sortProductsForProfile(enriched.filter((product) => product.productRole === role), profile)[0];
+  }
+
+  addProduct(bestByRole('base'));
+  addProduct(bestByRole('wet'));
+
+  const remaining = sortProductsForProfile(
+    enriched.filter((product) => !seen.has(`${product.source || 'db'}:${product.id}`)),
+    profile,
+  );
+  remaining.forEach(addProduct);
+
+  return selected;
+}
+
 function mergeCatalogProducts(dbProducts, minimum = 3, profile = {}) {
   const normalized = dbProducts
     .map(normalizeProduct)
@@ -238,8 +368,9 @@ function mergeCatalogProducts(dbProducts, minimum = 3, profile = {}) {
     .filter((item) => !productMatchesAllergy(item, profile.allergies))
     .sort((a, b) => scoreProduct(b, profile) - scoreProduct(a, profile));
   const mixed = mixAiOnlyAndPublicProducts(normalized);
-  if (mixed.length >= minimum) return mixed;
-  return [...mixed, ...FALLBACK_PRODUCTS].slice(0, minimum);
+  const desiredCount = mixed.length >= minimum ? Math.min(Math.max(minimum, 8), mixed.length) : minimum;
+  const catalog = mixed.length >= minimum ? mixed : [...mixed, ...FALLBACK_PRODUCTS];
+  return selectBalancedCatalogProducts(catalog, desiredCount, profile);
 }
 
 function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS, source = 'fallback', durationDays = 7) {
@@ -263,7 +394,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
 }
 
 function buildRecommendationPrompt(profile, products, durationDays = 7) {
-  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only for durationDays=${durationDays}. Mix AI-only combo products with normal catalog products when both are relevant. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones.\n${getNutritionGroundingForPrompt()}\nJSON fields required: summary, durationDays, dailyCalories {min,max,basis}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType/quantity/daysCovered/packageLabel/quantityBasis/estimatedDaysCovered/servingNote. Quantity is validated by the server from catalog weight/name, so select products from catalog and explain reasons only.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
+  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only for durationDays=${durationDays}. Mix AI-only combo products with normal catalog products when both are relevant. Prefer a balanced cat meal kit: base dry/kibble food first, wet hydration food second, and treat/topping only as an optional add-on under 10% of daily calories. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones.\n${getNutritionGroundingForPrompt()}\nJSON fields required: summary, durationDays, dailyCalories {min,max,basis}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType/productRole/quantity/daysCovered/packageLabel/quantityBasis/estimatedDaysCovered/servingNote. Quantity and productRole are validated by the server from catalog data, so select products from catalog and explain reasons only.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
 }
 
 function extractJson(text) {
@@ -281,7 +412,7 @@ async function fetchCatalogProducts(ProductModel = Product, profile = {}) {
         $or: [{ isAiComboOnly: true }, { isAiComboOnly: { $ne: true } }],
       })
         .sort({ isBestSeller: -1, soldCount: -1, createdAt: -1 })
-        .limit(8),
+        .limit(24),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Product catalog timeout')), 3000)),
     ]);
     return mergeCatalogProducts(products, 3, profile);
@@ -293,6 +424,7 @@ async function fetchCatalogProducts(ProductModel = Product, profile = {}) {
 function enrichRecommendationProducts(products = [], durationDays = 7) {
   return products.map((product) => ({
     ...product,
+    productRole: product.productRole || classifyProductRole(product),
     quantity: Math.max(1, Number(product.quantity) || Math.ceil(durationDays / 30)),
     daysCovered: Math.max(1, Number(product.daysCovered) || durationDays),
     packageLabel: product.packageLabel || '',
@@ -316,6 +448,7 @@ function toRecommendationProduct(catalogProduct, selectedProduct = {}, durationD
     price: catalogProduct.price,
     image: catalogProduct.image || '',
     foodType: catalogProduct.foodType,
+    productRole: catalogProduct.productRole || classifyProductRole(catalogProduct),
     quantity: quantityMeta.quantity,
     daysCovered: Math.max(1, Number(durationDays) || 7),
     packageLabel: quantityMeta.packageLabel,
@@ -351,6 +484,45 @@ function reconcileRecommendationProducts(selectedProducts = [], catalog = [], du
     .filter(Boolean);
 }
 
+function ensureBalancedRecommendationProducts(reconciledProducts = [], catalog = [], durationDays = 7, profile = {}) {
+  const balancedCatalog = selectBalancedCatalogProducts(catalog, 3, profile);
+  const selected = [];
+  const seen = new Set();
+
+  function keyFor(product) {
+    return `${product.fallbackId ? 'fallback' : 'db'}:${product.productId || product.fallbackId}`;
+  }
+
+  function addRecommendationProduct(product) {
+    if (!product || selected.length >= 3) return;
+    const key = keyFor(product);
+    if (seen.has(key)) return;
+    seen.add(key);
+    selected.push(product);
+  }
+
+  function addRole(role) {
+    const existing = reconciledProducts.find((product) => product.productRole === role);
+    if (existing) {
+      addRecommendationProduct(existing);
+      return;
+    }
+    const catalogProduct = balancedCatalog.find((product) => product.productRole === role);
+    if (catalogProduct) {
+      addRecommendationProduct(toRecommendationProduct(catalogProduct, {}, durationDays, selected.length, profile));
+    }
+  }
+
+  addRole('base');
+  addRole('wet');
+  reconciledProducts.forEach(addRecommendationProduct);
+  balancedCatalog.forEach((product) => {
+    addRecommendationProduct(toRecommendationProduct(product, {}, durationDays, selected.length, profile));
+  });
+
+  return selected.length ? selected : reconciledProducts;
+}
+
 async function buildRecommendationForProfile(profile, options = {}) {
   const ProductModel = options.ProductModel || Product;
   const stream = options.streamChatCompletion || streamChatCompletion;
@@ -373,8 +545,9 @@ async function buildRecommendationForProfile(profile, options = {}) {
     const parsed = extractJson(content);
     const recommendation = { ...deterministicRecommendation, ...parsed, source: 'ai', durationDays };
     const reconciledProducts = reconcileRecommendationProducts(parsed.products, catalog, durationDays, plainProfile);
-    recommendation.products = reconciledProducts.length
-      ? reconciledProducts
+    const balancedProducts = ensureBalancedRecommendationProducts(reconciledProducts, catalog, durationDays, plainProfile);
+    recommendation.products = balancedProducts.length
+      ? balancedProducts
       : enrichRecommendationProducts(deterministicRecommendation.products, durationDays);
     return recommendation;
   } catch (err) {
@@ -385,6 +558,8 @@ async function buildRecommendationForProfile(profile, options = {}) {
 module.exports = {
   FALLBACK_PRODUCTS,
   normalizeProduct,
+  classifyProductRole,
+  selectBalancedCatalogProducts,
   parsePackageQuantity,
   resolveRecommendationQuantity,
   mergeCatalogProducts,

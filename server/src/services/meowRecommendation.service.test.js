@@ -6,10 +6,12 @@ const {
   buildDeterministicRecommendation,
   buildRecommendationForProfile,
   buildRecommendationPrompt,
+  classifyProductRole,
   mergeCatalogProducts,
   normalizeProduct,
   parsePackageQuantity,
   resolveRecommendationQuantity,
+  selectBalancedCatalogProducts,
 } = require('./meowRecommendation.service');
 const {
   NUTRITION_REFERENCE_SOURCES,
@@ -35,13 +37,40 @@ test('normalizeProduct maps db product fields to recommendation catalog', () => 
     foodType: 'dry',
     weight: '1.5kg',
     healthNeeds: ['digestion'],
+    tags: ['hat kho', 'long muot'],
   });
 
   assert.equal(product.id, 'product-id');
   assert.equal(product.price, 90000);
   assert.equal(product.image, 'image.jpg');
   assert.equal(product.weight, '1.5kg');
+  assert.deepEqual(product.tags, ['hat kho', 'long muot']);
   assert.equal(product.source, 'db');
+});
+
+test('classifyProductRole separates base food, wet hydration, and treat toppings', () => {
+  assert.equal(classifyProductRole({ name: 'Hat kho cho meo 1kg', foodType: 'dry', tags: ['hat kho'] }), 'base');
+  assert.equal(classifyProductRole({ name: 'Pate dinh duong lon 85g', foodType: 'wet', tags: ['pate'] }), 'wet');
+  assert.equal(classifyProductRole({ name: 'Sup thuong ca ngu 12g', foodType: 'wet', tags: ['snack'] }), 'treat');
+});
+
+test('selectBalancedCatalogProducts prioritizes age-compatible base and wet foods before treats', () => {
+  const catalog = [
+    normalizeProduct({ _id: 'treat-1', name: 'Sup thuong ca ngu 12g', price: 1, foodType: 'wet', ageRange: 'all', tags: ['snack'] }),
+    normalizeProduct({ _id: 'adult-dry', name: 'Hat kho adult 1kg', price: 1, foodType: 'dry', ageRange: 'adult', tags: ['hat kho'] }),
+    normalizeProduct({ _id: 'kitten-dry', name: 'Hat kho kitten 1kg', price: 1, foodType: 'dry', ageRange: 'kitten', tags: ['hat kho'] }),
+    normalizeProduct({ _id: 'kitten-wet', name: 'Pate kitten lon 85g', price: 1, foodType: 'wet', ageRange: 'kitten', tags: ['pate'] }),
+  ];
+
+  const selected = selectBalancedCatalogProducts(catalog, 3, {
+    ageYears: 0,
+    ageMonths: 4,
+    currentFoodType: 'mixed',
+    healthGoals: ['digestion'],
+  });
+
+  assert.deepEqual(selected.map((product) => product.id), ['kitten-dry', 'kitten-wet', 'treat-1']);
+  assert.deepEqual(selected.map((product) => product.productRole), ['base', 'wet', 'treat']);
 });
 
 test('parsePackageQuantity reads package size from weight before product name', () => {
@@ -304,14 +333,79 @@ test('buildRecommendationForProfile reconciles AI product display fields to cata
   });
 
   assert.equal(recommendation.source, 'ai');
-  assert.equal(recommendation.products[0].productId, productId);
-  assert.equal(recommendation.products[0].name, 'Catalog Combo Food');
-  assert.equal(recommendation.products[0].price, 99000);
-  assert.equal(recommendation.products[0].image, 'catalog.jpg');
-  assert.equal(recommendation.products[0].foodType, 'wet');
-  assert.equal(recommendation.products[0].reason, 'AI selected this item.');
-  assert.equal(recommendation.products[0].quantity, 82);
-  assert.equal(recommendation.products[0].daysCovered, 30);
-  assert.equal(recommendation.products[0].packageLabel, '80g');
-  assert.equal(recommendation.products[0].quantityBasis, 'weight_grams');
+  const reconciledProduct = recommendation.products.find((product) => product.productId === productId);
+  assert.ok(reconciledProduct);
+  assert.equal(reconciledProduct.name, 'Catalog Combo Food');
+  assert.equal(reconciledProduct.price, 99000);
+  assert.equal(reconciledProduct.image, 'catalog.jpg');
+  assert.equal(reconciledProduct.foodType, 'wet');
+  assert.equal(reconciledProduct.reason, 'AI selected this item.');
+  assert.equal(reconciledProduct.quantity, 82);
+  assert.equal(reconciledProduct.daysCovered, 30);
+  assert.equal(reconciledProduct.packageLabel, '80g');
+  assert.equal(reconciledProduct.quantityBasis, 'weight_grams');
+});
+
+test('buildRecommendationForProfile repairs unbalanced AI selections with base and wet foods', async () => {
+  const dryId = '507f1f77bcf86cd799439021';
+  const wetId = '507f1f77bcf86cd799439022';
+  const treatId = '507f1f77bcf86cd799439023';
+  const ProductModel = {
+    find() {
+      return {
+        sort() {
+          return {
+            limit: async () => [
+              {
+                _id: treatId,
+                name: 'Sup thuong ca ngu 12g',
+                price: 2100,
+                foodType: 'wet',
+                weight: '12g',
+                tags: ['snack'],
+              },
+              {
+                _id: wetId,
+                name: 'Pate dinh duong lon 85g',
+                price: 11200,
+                foodType: 'wet',
+                weight: '85g',
+                tags: ['pate'],
+              },
+              {
+                _id: dryId,
+                name: 'Hat kho protein cao goi 1kg',
+                price: 161000,
+                foodType: 'dry',
+                weight: '1kg',
+                tags: ['hat kho'],
+              },
+            ],
+          };
+        },
+      };
+    },
+  };
+
+  const recommendation = await buildRecommendationForProfile(profile, {
+    ProductModel,
+    streamChatCompletion: async ({ onToken }) => {
+      onToken(JSON.stringify({
+        summary: 'AI summary',
+        products: [
+          {
+            productId: treatId,
+            name: 'Sup thuong ca ngu 12g',
+            reason: 'AI selected a treat only.',
+            quantity: 30,
+          },
+        ],
+      }));
+    },
+    durationDays: 7,
+  });
+
+  assert.deepEqual(recommendation.products.map((product) => product.productId), [dryId, wetId, treatId]);
+  assert.deepEqual(recommendation.products.map((product) => product.productRole), ['base', 'wet', 'treat']);
+  assert.equal(recommendation.products[2].reason, 'AI selected a treat only.');
 });
