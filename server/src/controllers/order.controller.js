@@ -154,7 +154,12 @@ exports.handlePayosWebhook = async (req, res) => {
 
   const webhookData = verified?.data ? verified : { ...req.body, data: verified };
   const data = webhookData.data || {};
-  const order = await Order.findOne({ payosOrderCode: Number(data.orderCode) });
+  const payosOrderCode = Number(data.orderCode);
+  if (!Number.isSafeInteger(payosOrderCode)) {
+    return res.json({ ok: true, ignored: true });
+  }
+
+  const order = await Order.findOne({ payosOrderCode });
 
   if (!order) {
     return res.json({ ok: true, ignored: true });

@@ -10,3 +10,9 @@ test('order creation stores free shipping for every subtotal', () => {
   assert.doesNotMatch(source, /500000/);
   assert.doesNotMatch(source, /25000/);
 });
+
+test('payOS webhook handler ignores verified setup probes without a numeric orderCode', () => {
+  assert.match(source, /Number\.isSafeInteger\(payosOrderCode\)/);
+  assert.match(source, /ignored:\s*true/);
+  assert.doesNotMatch(source, /payosOrderCode:\s*Number\(data\.orderCode\)/);
+});
