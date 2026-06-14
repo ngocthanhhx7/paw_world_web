@@ -13,6 +13,29 @@ test('recommendation API posts duration payload and cart combo API posts combo i
   assert.match(cartStoreSource, /cartApi\.addCombo\(payload\)/);
 });
 
+test('RecommendationPage uses recommended products as an interactive hero carousel', () => {
+  assert.match(source, /const \[activeProductIndex,\s*setActiveProductIndex\] = useState\(0\)/);
+  assert.match(source, /const carouselProducts = products\.length \? products : \[primaryProduct\]/);
+  assert.match(source, /const activeProduct = carouselProducts\[activeProductIndex\] \|\| primaryProduct/);
+  assert.match(source, /function showPreviousProduct\(\)/);
+  assert.match(source, /function showNextProduct\(\)/);
+  assert.match(source, /setActiveProductIndex\(0\)/);
+  assert.match(source, /onClick=\{showPreviousProduct\}/);
+  assert.match(source, /onClick=\{showNextProduct\}/);
+  assert.match(source, /carouselProducts\.map\(\(product,\s*index\) =>/);
+});
+
+test('RecommendationPage derives main ingredient card from recommended products', () => {
+  assert.match(source, /const PRODUCT_ROLE_ORDER =/);
+  assert.match(source, /const mainIngredientProducts = useMemo\(\(\) =>/);
+  assert.match(source, /mainIngredientProducts\.map\(\(product,\s*index\) =>/);
+  assert.match(source, /ingredientBodyText\(product\)/);
+  assert.doesNotMatch(source, /\/assets\/cat\/image 649\.png/);
+  assert.doesNotMatch(source, /\/assets\/cat\/image 650\.png/);
+  assert.doesNotMatch(source, /Thá»‹t gÃ  tÆ°Æ¡i/);
+  assert.doesNotMatch(source, /CÃ  rá»‘t/);
+});
+
 test('RecommendationPage asks duration before requesting recommendation', () => {
   assert.match(source, /const durationOptions = \[/);
   assert.match(source, /durationDays:\s*1/);

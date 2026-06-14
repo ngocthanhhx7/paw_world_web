@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Beef, Bone, ChevronLeft, ChevronRight, Info, Leaf, ShieldPlus, ShoppingBag, Sprout, Waves, Zap } from 'lucide-react';
+import { Bone, ChevronLeft, ChevronRight, Info, Leaf, ShoppingBag, Waves, Zap } from 'lucide-react';
 
 import { petProfileApi } from '@/api/endpoints';
 import { useCartStore } from '@/store/cartStore';
@@ -13,6 +13,13 @@ const durationOptions = [
   { durationDays: 7, label: '7 ngày' },
   { durationDays: 30, label: '30 ngày' },
 ];
+
+const PRODUCT_ROLE_ORDER = {
+  base: 0,
+  wet: 1,
+  support: 2,
+  treat: 3,
+};
 
 function pickProducts(recommendation) {
   return recommendation?.products || recommendation?.recommendedProducts || [];
@@ -57,6 +64,17 @@ function caloriesText(value) {
   if (typeof value === 'number') return String(value);
   if (value.min && value.max) return String(Math.round((Number(value.min) + Number(value.max)) / 2));
   return String(value);
+}
+
+function ingredientBodyText(product) {
+  if (product?.reason) return product.reason;
+  const roleLabels = {
+    base: 'Sản phẩm chính trong combo AI.',
+    wet: 'Sản phẩm ướt hỗ trợ bổ sung nước và đa dạng khẩu phần.',
+    support: 'Sản phẩm bổ trợ giúp khẩu phần phù hợp hơn.',
+    treat: 'Topping hoặc snack dùng như phần thưởng nhỏ.',
+  };
+  return roleLabels[product?.productRole] || 'Sản phẩm AI gợi ý cho thực đơn này.';
 }
 
 function BenefitCard({ icon, title, body, tone }) {
@@ -152,6 +170,7 @@ export default function RecommendationPage() {
   const navigate = useNavigate();
   const addCombo = useCartStore((s) => s.addCombo);
   const [selectedDurationDays, setSelectedDurationDays] = useState(null);
+  const [activeProductIndex, setActiveProductIndex] = useState(0);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -162,7 +181,10 @@ export default function RecommendationPage() {
     setLoading(true);
     petProfileApi.recommend(profileId, { durationDays: selectedDurationDays })
       .then((response) => {
-        if (active) setData(response);
+        if (active) {
+          setData(response);
+          setActiveProductIndex(0);
+        }
       })
       .catch((err) => {
         if (active) toast.error(err?.response?.data?.message || 'Chưa tạo được gợi ý AI');
@@ -179,6 +201,18 @@ export default function RecommendationPage() {
   const recommendation = data?.recommendation || profile?.aiSummary || {};
   const products = pickProducts(recommendation);
   const primaryProduct = products[0] || {};
+  const carouselProducts = products.length ? products : [primaryProduct];
+  const activeProduct = carouselProducts[activeProductIndex] || primaryProduct;
+  const hasMultipleCarouselProducts = carouselProducts.length > 1;
+  const mainIngredientProducts = useMemo(() => (
+    [...products]
+      .sort((a, b) => {
+        const roleDelta = (PRODUCT_ROLE_ORDER[a?.productRole] ?? 99) - (PRODUCT_ROLE_ORDER[b?.productRole] ?? 99);
+        if (roleDelta) return roleDelta;
+        return String(a?.name || '').localeCompare(String(b?.name || ''));
+      })
+      .slice(0, 3)
+  ), [products]);
   const catDisplayName = profile?.name || recommendation.petName || 'bé mèo';
   const primaryFoodType = foodTypeLabel(primaryProduct.foodType || recommendation.foodType || profile?.currentFoodType);
   const feedingPlan = Array.isArray(recommendation.feedingPlan) ? recommendation.feedingPlan : [];
@@ -189,6 +223,20 @@ export default function RecommendationPage() {
     if (explicitTotal > 0 && cartableProducts.length === products.length) return explicitTotal;
     return cartableProducts.reduce((sum, product) => sum + Number(product.price || product.finalPrice || 0) * getProductQuantity(product), 0);
   }, [cartableProducts, products.length, recommendation.estimatedTotal, recommendation.total, recommendation.totalPrice]);
+
+  useEffect(() => {
+    if (activeProductIndex >= carouselProducts.length) setActiveProductIndex(0);
+  }, [activeProductIndex, carouselProducts.length]);
+
+  function showPreviousProduct() {
+    if (!hasMultipleCarouselProducts) return;
+    setActiveProductIndex((current) => (current === 0 ? carouselProducts.length - 1 : current - 1));
+  }
+
+  function showNextProduct() {
+    if (!hasMultipleCarouselProducts) return;
+    setActiveProductIndex((current) => (current + 1) % carouselProducts.length);
+  }
 
   const checkout = async () => {
     if (!cartableProducts.length || cartableProducts.length !== products.length) {
@@ -274,18 +322,30 @@ export default function RecommendationPage() {
           </div>
 
           <div className="relative h-[300px] rounded-[30px] border-[6px] border-white bg-[#b993cb] shadow-[0_15px_28px_rgba(39,34,46,0.18)]">
-            <button className="absolute left-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center text-white">
-              <ChevronLeft size={42} />
-            </button>
-            <img src={primaryProduct.image || productFallback} alt={primaryProduct.name || 'Meal kit'} className="mx-auto h-full object-contain p-8" />
-            <button className="absolute right-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center text-white">
-              <ChevronRight size={42} />
-            </button>
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-3">
-              <span className="h-4 w-4 rounded-full bg-white" />
-              <span className="h-4 w-4 rounded-full bg-[#9e9aa4]" />
-              <span className="h-4 w-4 rounded-full bg-[#9e9aa4]" />
-            </div>
+            {hasMultipleCarouselProducts ? (
+              <button type="button" aria-label="Ảnh sản phẩm trước" onClick={showPreviousProduct} className="absolute left-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center text-white transition hover:scale-105">
+                <ChevronLeft size={42} />
+              </button>
+            ) : null}
+            <img src={activeProduct.image || productFallback} alt={activeProduct.name || 'Meal kit'} className="mx-auto h-full object-contain p-8" />
+            {hasMultipleCarouselProducts ? (
+              <button type="button" aria-label="Ảnh sản phẩm tiếp theo" onClick={showNextProduct} className="absolute right-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center text-white transition hover:scale-105">
+                <ChevronRight size={42} />
+              </button>
+            ) : null}
+            {hasMultipleCarouselProducts ? (
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-3">
+                {carouselProducts.map((product, index) => (
+                  <button
+                    key={getProductId(product) || product.fallbackId || product.name || index}
+                    type="button"
+                    aria-label={`Xem ảnh ${index + 1}`}
+                    onClick={() => setActiveProductIndex(index)}
+                    className={`h-4 w-4 rounded-full transition ${index === activeProductIndex ? 'bg-white' : 'bg-[#9e9aa4] hover:bg-white/75'}`}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -317,10 +377,20 @@ export default function RecommendationPage() {
 
           <section className="rounded-[28px] border border-[#ffb9aa] bg-white p-8">
             <h3 className="text-sm font-extrabold uppercase tracking-wide text-[#77717e]">Thành phần chính</h3>
-            <div className="mt-6 space-y-5">
-              <Ingredient image="/assets/cat/image 649.png" title="Thịt gà tươi" body="Cung cấp đạm nạc dễ hấp thu" />
-              <Ingredient image="/assets/cat/image 650.png" title="Cà rốt" body="Nguồn chất xơ lành mạnh" />
-            </div>
+            {mainIngredientProducts.length ? (
+              <div className="mt-6 space-y-5">
+                {mainIngredientProducts.map((product, index) => (
+                  <Ingredient
+                    key={getProductId(product) || product.fallbackId || product.name || index}
+                    image={product.image || productFallback}
+                    title={product.name || 'Sản phẩm AI gợi ý'}
+                    body={ingredientBodyText(product)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="mt-6 text-sm font-semibold leading-6 text-[#6c6673]">Sản phẩm AI gợi ý sẽ hiển thị tại đây sau khi có dữ liệu thực đơn.</p>
+            )}
           </section>
         </div>
 
