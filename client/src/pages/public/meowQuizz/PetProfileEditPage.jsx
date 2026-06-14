@@ -133,7 +133,7 @@ export default function PetProfileEditPage() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-10 text-[#25222b]">
+    <section className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#fffefa] pb-16 pt-10 text-[#25222b]">
       <div className="pointer-events-none absolute -left-16 top-28 hidden h-[240px] w-[240px] opacity-[0.08] lg:block">
         <img src="/assets/icon/khac/pets.svg" alt="" className="h-full w-full" />
       </div>
@@ -226,14 +226,12 @@ export default function PetProfileEditPage() {
           </Field>
         </div>
 
-        <div className="edit-profile-bottom-spacer h-28" aria-hidden="true" />
-
-        <div className="edit-profile-action-bar fixed bottom-0 left-0 right-0 z-40 bg-[#eff1ff] px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5">
-          <div className="mx-auto flex max-w-[624px] items-center justify-center gap-12">
-            <button type="button" onClick={() => navigate('/meow-quizz/ho-so')} className="h-14 min-w-[160px] rounded-full text-base font-extrabold">
+        <div className="edit-profile-action-footer mt-12 rounded-[18px] bg-[#eff1ff] px-4 py-5">
+          <div className="mx-auto flex max-w-[624px] items-center justify-center gap-6 max-sm:flex-col max-sm:gap-3">
+            <button type="button" onClick={() => navigate('/meow-quizz/ho-so')} className="h-14 min-w-[160px] rounded-full px-8 text-base font-extrabold max-sm:w-full">
               Hủy bỏ
             </button>
-            <button disabled={saving} className="h-14 min-w-[226px] rounded-full bg-[#ffca2d] text-base font-extrabold disabled:opacity-60">
+            <button disabled={saving} className="h-14 min-w-[226px] rounded-full bg-[#ffca2d] px-8 text-base font-extrabold disabled:opacity-60 max-sm:w-full">
               {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </div>

@@ -20,3 +20,9 @@ test('MeowQuizzLayout routes account icon by customer auth state', () => {
   assert.match(source, /const customer = useCustomerAuthStore\(\(s\) => s\.customer\)/);
   assert.match(source, /to=\{customer \? '\/meow-quizz\/ho-so' : '\/dang-nhap'\}/);
 });
+
+test('MeowQuizzLayout only disables sticky header on pet profile edit route', () => {
+  assert.match(source, /isEditingPetProfile/);
+  assert.match(source, /\/\^\\\/meow-quizz\\\/ho-so\\\/\[\^\/\]\+\\\/chinh-sua\$\/\.test\(pathname\)/);
+  assert.match(source, /isEditingPetProfile \? 'relative z-40' : 'sticky top-0 z-40'/);
+});

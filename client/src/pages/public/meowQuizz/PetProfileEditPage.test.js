@@ -4,9 +4,10 @@ import assert from 'node:assert/strict';
 
 const source = readFileSync(new URL('./PetProfileEditPage.jsx', import.meta.url), 'utf8');
 
-test('PetProfileEditPage reserves space so the fixed action bar does not cover fields', () => {
-  assert.match(source, /edit-profile-action-bar/);
-  assert.match(source, /edit-profile-bottom-spacer/);
-  assert.match(source, /pb-\[calc\(7rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(source, /pb-\[calc\(1\.25rem\+env\(safe-area-inset-bottom\)\)\]/);
+test('PetProfileEditPage keeps save actions in normal form flow', () => {
+  assert.match(source, /edit-profile-action-footer/);
+  assert.doesNotMatch(source, /edit-profile-action-bar/);
+  assert.doesNotMatch(source, /edit-profile-bottom-spacer/);
+  assert.doesNotMatch(source, /fixed bottom-0/);
+  assert.doesNotMatch(source, /pb-\[calc\(7rem\+env\(safe-area-inset-bottom\)\)\]/);
 });

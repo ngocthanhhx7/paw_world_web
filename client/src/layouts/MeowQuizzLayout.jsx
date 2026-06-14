@@ -58,10 +58,11 @@ export default function MeowQuizzLayout() {
   const { pathname } = useLocation();
   const customer = useCustomerAuthStore((s) => s.customer);
   const activeStep = getActiveStep(pathname);
+  const isEditingPetProfile = /^\/meow-quizz\/ho-so\/[^/]+\/chinh-sua$/.test(pathname);
 
   return (
     <div className="min-h-screen bg-[#fffefa] text-[#26222e]">
-      <header className="sticky top-0 z-40 border-b border-[#eeeaf2] bg-white">
+      <header className={`${isEditingPetProfile ? 'relative z-40' : 'sticky top-0 z-40'} border-b border-[#eeeaf2] bg-white`}>
         <div className="grid h-20 grid-cols-[300px_1fr_220px] items-center px-12 max-lg:grid-cols-[minmax(0,1fr)_auto] max-lg:px-5 max-sm:h-[68px] max-sm:px-4">
           <Link to="/" className="inline-flex min-w-0 items-center" aria-label="PawWorld">
             <img src="/assets/logo/ngang.png" alt="PawWorld" className="h-[42px] w-auto max-w-full max-sm:h-9" />
