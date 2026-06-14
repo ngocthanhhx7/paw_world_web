@@ -11,8 +11,8 @@ export default function CartPage() {
 
   const items = cart?.items || [];
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
-  const shippingFee = subtotal === 0 ? 0 : subtotal >= 500000 ? 0 : 25000;
-  const total = subtotal + shippingFee;
+  const shippingFee = 0;
+  const total = subtotal;
 
   if (!items.length) {
     return (
@@ -94,11 +94,6 @@ export default function CartPage() {
                 {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
               </span>
             </div>
-            {subtotal < 500000 && (
-              <div className="text-xs text-coral-500 bg-coral-50 rounded-xl p-2">
-                Mua thêm {formatPrice(500000 - subtotal)} để được freeship.
-              </div>
-            )}
             <div className="border-t border-cream-200 pt-3 mt-3 flex justify-between text-base">
               <span className="text-cocoa-500">Tổng cộng</span>
               <span className="font-display text-2xl text-coral-500">{formatPrice(total)}</span>

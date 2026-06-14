@@ -32,8 +32,8 @@ export default function CheckoutPage() {
 
   const items = cart?.items || [];
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
-  const shippingFee = subtotal === 0 ? 0 : subtotal >= 500000 ? 0 : 25000;
-  const total = subtotal + shippingFee;
+  const shippingFee = 0;
+  const total = subtotal;
 
   if (!items.length) {
     return (

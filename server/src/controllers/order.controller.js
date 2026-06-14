@@ -61,8 +61,8 @@ exports.create = async (req, res) => {
   if (!items.length) return res.status(400).json({ message: 'Không có sản phẩm hợp lệ trong đơn' });
 
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
-  const shippingFee = subtotal >= 500000 ? 0 : 25000; // miễn ship đơn >= 500k
-  const total = subtotal + shippingFee;
+  const shippingFee = 0;
+  const total = subtotal;
 
   const order = await Order.create({
     orderCode: generateOrderCode(),
