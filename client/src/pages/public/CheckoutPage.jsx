@@ -9,7 +9,7 @@ import { formatPrice } from '@/utils/format';
 
 const PAYMENT_METHODS = [
   { v: 'cod', label: 'Thanh toán khi nhận hàng (COD)', desc: 'Trả tiền mặt khi shipper giao đến' },
-  { v: 'bank_transfer', label: 'Chuyển khoản ngân hàng', desc: 'Nhân viên sẽ liên hệ gửi STK' },
+  { v: 'bank_transfer', label: 'Chuyển khoản ngân hàng', desc: 'Thanh toán online qua mã QR payOS' },
 ];
 
 export default function CheckoutPage() {
@@ -65,6 +65,10 @@ export default function CheckoutPage() {
         paymentMethod: form.paymentMethod,
       });
       await fetchCart(); // refresh – server đã clear cart
+      if (form.paymentMethod === 'bank_transfer' && order.payment?.checkoutUrl) {
+        window.location.assign(order.payment.checkoutUrl);
+        return;
+      }
       toast.success('Đặt hàng thành công!');
       navigate(`/dat-hang-thanh-cong/${order.orderCode}`);
     } catch (err) {

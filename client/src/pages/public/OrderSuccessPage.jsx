@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Package, Phone } from 'lucide-react';
 
 import { orderApi } from '@/api/endpoints';
@@ -13,9 +13,22 @@ const STATUS_LABEL = {
   cancelled: 'Đã huỷ',
 };
 
+const PAYMENT_STATUS_LABEL = {
+  unpaid: 'Chưa thanh toán',
+  pending: 'Chờ thanh toán',
+  paid: 'Đã thanh toán',
+  cancelled: 'Đã huỷ thanh toán',
+  failed: 'Thanh toán thất bại',
+};
+
 export default function OrderSuccessPage() {
   const { code } = useParams();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
+  const isPaymentCancelled =
+    searchParams.get('payment') === 'cancelled' ||
+    searchParams.get('cancel') === 'true' ||
+    searchParams.get('status') === 'CANCELLED';
 
   useEffect(() => {
     if (!code) return;
@@ -25,10 +38,17 @@ export default function OrderSuccessPage() {
   return (
     <div className="container-paw py-14">
       <div className="card max-w-2xl mx-auto p-8 text-center">
-        <CheckCircle2 size={64} className="text-leaf-500 mx-auto" />
-        <h1 className="text-3xl mt-3 text-cocoa-700">Đặt hàng thành công!</h1>
+        <CheckCircle2
+          size={64}
+          className={`${isPaymentCancelled ? 'text-coral-500' : 'text-leaf-500'} mx-auto`}
+        />
+        <h1 className="text-3xl mt-3 text-cocoa-700">
+          {isPaymentCancelled ? 'Đơn hàng đã được ghi nhận' : 'Đặt hàng thành công!'}
+        </h1>
         <p className="text-cocoa-400 mt-2">
-          Cảm ơn bạn đã mua sắm tại Paw World. Đội ngũ sẽ liên hệ xác nhận đơn trong vòng 30 phút.
+          {isPaymentCancelled
+            ? 'Bạn đã huỷ thanh toán online. Đội ngũ sẽ liên hệ để hỗ trợ xác nhận hoặc đổi phương thức thanh toán.'
+            : 'Cảm ơn bạn đã mua sắm tại Paw World. Đội ngũ sẽ liên hệ xác nhận đơn trong vòng 30 phút.'}
         </p>
 
         <div className="bg-cream-100 rounded-2xl p-4 mt-6 text-left">
@@ -38,6 +58,14 @@ export default function OrderSuccessPage() {
             <div className="text-xs text-cocoa-400 mt-1">
               Đặt lúc {formatDate(order.createdAt)} · Trạng thái:{' '}
               <span className="font-semibold text-cocoa-600">{STATUS_LABEL[order.status]}</span>
+              {order.paymentStatus && (
+                <>
+                  {' '}· Thanh toán:{' '}
+                  <span className="font-semibold text-cocoa-600">
+                    {PAYMENT_STATUS_LABEL[order.paymentStatus] || order.paymentStatus}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>

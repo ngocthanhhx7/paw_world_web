@@ -37,6 +37,16 @@ const orderSchema = new mongoose.Schema(
       enum: ['cod', 'bank_transfer'],
       default: 'cod',
     },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'pending', 'paid', 'cancelled', 'failed'],
+      default: 'unpaid',
+    },
+    paymentProvider: { type: String, default: '' },
+    paymentReference: { type: String, default: '' },
+    payosOrderCode: { type: Number, index: true, sparse: true },
+    paidAt: { type: Date },
+    paymentRaw: { type: mongoose.Schema.Types.Mixed },
 
     subtotal: { type: Number, required: true, min: 0 },
     shippingFee: { type: Number, default: 0, min: 0 },

@@ -1,6 +1,13 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const {
+  buildPayosOrderCode,
+  createPaymentLink,
+  getMissingPayosConfig,
+  mapPayosWebhookStatus,
+  verifyWebhook,
+} = require('../services/payos.service');
 
 function generateOrderCode() {
   const date = new Date();
@@ -20,11 +27,22 @@ function generateOrderCode() {
 exports.create = async (req, res) => {
   const { customer, shippingAddress, paymentMethod = 'cod', items: directItems } = req.body;
 
+  if (!['cod', 'bank_transfer'].includes(paymentMethod)) {
+    return res.status(400).json({ message: 'Hình thức thanh toán không hợp lệ' });
+  }
   if (!customer?.fullName || !customer?.phone) {
     return res.status(400).json({ message: 'Vui lòng nhập họ tên và số điện thoại' });
   }
   if (!shippingAddress?.address) {
     return res.status(400).json({ message: 'Vui lòng nhập địa chỉ giao hàng' });
+  }
+  if (paymentMethod === 'bank_transfer') {
+    const missingPayosConfig = getMissingPayosConfig();
+    if (missingPayosConfig.length) {
+      return res.status(503).json({
+        message: `Thiếu cấu hình payOS: ${missingPayosConfig.join(', ')}`,
+      });
+    }
   }
 
   const cartId = req.cookies?.paw_cart_id || req.headers['x-cart-id'];
@@ -63,13 +81,18 @@ exports.create = async (req, res) => {
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
   const shippingFee = 0;
   const total = subtotal;
+  const orderCode = generateOrderCode();
+  const payosOrderCode = paymentMethod === 'bank_transfer' ? buildPayosOrderCode(orderCode) : undefined;
 
   const order = await Order.create({
-    orderCode: generateOrderCode(),
+    orderCode,
     customer,
     shippingAddress,
     items,
     paymentMethod,
+    paymentStatus: paymentMethod === 'bank_transfer' ? 'pending' : 'unpaid',
+    paymentProvider: paymentMethod === 'bank_transfer' ? 'payos' : '',
+    payosOrderCode,
     subtotal,
     shippingFee,
     discount: 0,
@@ -78,6 +101,13 @@ exports.create = async (req, res) => {
     statusHistory: [{ status: 'pending', note: 'Đơn vừa được tạo', at: new Date() }],
     cartId: cartId || '',
   });
+
+  let payment = null;
+  if (paymentMethod === 'bank_transfer') {
+    payment = await createPaymentLink(order);
+    order.paymentReference = payment.paymentLinkId || payment.id || '';
+    await order.save();
+  }
 
   // Cập nhật soldCount + giảm tồn kho (best-effort)
   await Promise.all(
@@ -94,7 +124,16 @@ exports.create = async (req, res) => {
     await Cart.updateOne({ cartId }, { $set: { items: [] } });
   }
 
-  res.status(201).json(order);
+  const responseBody = order.toObject();
+  if (payment) {
+    responseBody.payment = {
+      checkoutUrl: payment.checkoutUrl,
+      qrCode: payment.qrCode,
+      paymentLinkId: payment.paymentLinkId || payment.id || '',
+    };
+  }
+
+  res.status(201).json(responseBody);
 };
 
 /** GET /api/orders/:code — khách tra cứu theo mã đơn */
@@ -102,4 +141,34 @@ exports.getByCode = async (req, res) => {
   const order = await Order.findOne({ orderCode: req.params.code });
   if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
   res.json(order);
+};
+
+/** POST /api/orders/payos/webhook — payOS payment status callback */
+exports.handlePayosWebhook = async (req, res) => {
+  let verified;
+  try {
+    verified = verifyWebhook(req.body);
+  } catch (err) {
+    return res.status(400).json({ message: 'Webhook payOS không hợp lệ' });
+  }
+
+  const webhookData = verified?.data ? verified : { ...req.body, data: verified };
+  const data = webhookData.data || {};
+  const order = await Order.findOne({ payosOrderCode: Number(data.orderCode) });
+
+  if (!order) {
+    return res.json({ ok: true, ignored: true });
+  }
+
+  const paymentStatus = mapPayosWebhookStatus(webhookData);
+  order.paymentStatus = paymentStatus;
+  order.paymentProvider = 'payos';
+  order.paymentReference = data.paymentLinkId || order.paymentReference || '';
+  order.paymentRaw = webhookData;
+  if (paymentStatus === 'paid' && !order.paidAt) {
+    order.paidAt = new Date();
+  }
+  await order.save();
+
+  res.json({ ok: true });
 };

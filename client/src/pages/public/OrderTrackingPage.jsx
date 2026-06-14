@@ -14,6 +14,14 @@ const STATUS_LABEL = {
   cancelled: { label: 'Đã huỷ', color: 'bg-coral-500 text-white' },
 };
 
+const PAYMENT_STATUS_LABEL = {
+  unpaid: 'Chưa thanh toán',
+  pending: 'Chờ thanh toán',
+  paid: 'Đã thanh toán',
+  cancelled: 'Đã huỷ thanh toán',
+  failed: 'Thanh toán thất bại',
+};
+
 export default function OrderTrackingPage() {
   const [code, setCode] = useState('');
   const [order, setOrder] = useState(null);
@@ -90,6 +98,14 @@ export default function OrderTrackingPage() {
                   .join(', ')}
               </div>
             </div>
+            {order.paymentStatus && (
+              <div>
+                <div className="text-cocoa-400">Thanh toán</div>
+                <div className="font-semibold text-cocoa-600">
+                  {PAYMENT_STATUS_LABEL[order.paymentStatus] || order.paymentStatus}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 space-y-2">
