@@ -200,6 +200,8 @@ export default function AdminOrdersPage() {
               <div className="text-right">{formatPrice(active.subtotal)}</div>
               <div className="text-cocoa-400">Phí ship</div>
               <div className="text-right">{formatPrice(active.shippingFee)}</div>
+              <div className="text-cocoa-400">Phí đóng gói</div>
+              <div className="text-right">{formatPrice(active.packagingFee || 0)}</div>
               <div className="text-cocoa-500 font-semibold">Tổng cộng</div>
               <div className="text-right text-coral-500 font-display text-xl">
                 {formatPrice(active.total)}

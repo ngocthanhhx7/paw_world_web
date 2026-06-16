@@ -59,31 +59,37 @@ export default function MeowQuizzLayout() {
   const customer = useCustomerAuthStore((s) => s.customer);
   const activeStep = getActiveStep(pathname);
   const isEditingPetProfile = /^\/meow-quizz\/ho-so\/[^/]+\/chinh-sua$/.test(pathname);
+  const shouldShowStepper = !isEditingPetProfile;
+  const headerGridClassName = isEditingPetProfile
+    ? 'grid h-20 grid-cols-[minmax(0,1fr)_auto] items-center px-12 max-lg:px-5 max-sm:h-[68px] max-sm:px-4'
+    : 'grid h-20 grid-cols-[300px_1fr_220px] items-center px-12 max-lg:grid-cols-[minmax(0,1fr)_auto] max-lg:px-5 max-sm:h-[68px] max-sm:px-4';
 
   return (
     <div className="min-h-screen bg-[#fffefa] text-[#26222e]">
       <header className={`${isEditingPetProfile ? 'relative z-40' : 'sticky top-0 z-40'} border-b border-[#eeeaf2] bg-white`}>
-        <div className="grid h-20 grid-cols-[300px_1fr_220px] items-center px-12 max-lg:grid-cols-[minmax(0,1fr)_auto] max-lg:px-5 max-sm:h-[68px] max-sm:px-4">
+        <div className={headerGridClassName}>
           <Link to="/" className="inline-flex min-w-0 items-center" aria-label="PawWorld">
             <img src="/assets/logo/ngang.png" alt="PawWorld" className="h-[42px] w-auto max-w-full max-sm:h-9" />
           </Link>
 
-          <nav
-            className="meow-shell-stepper hidden grid-cols-[120px_64px_120px_64px_120px] items-start justify-center lg:grid xl:grid-cols-[132px_72px_132px_72px_132px]"
-            aria-label="Meow Quizz progress"
-          >
-            {stepItems.map((item, index) => {
-              return (
-                <Fragment key={item.label}>
-                  {index > 0 ? <StepLine highlighted={index <= activeStep} /> : null}
-                  <div className="grid min-w-0 justify-items-center gap-2">
-                    <StepCircle index={index} activeStep={activeStep} />
-                    <StepLabel item={item} index={index} activeStep={activeStep} />
-                  </div>
-                </Fragment>
-              );
-            })}
-          </nav>
+          {shouldShowStepper ? (
+            <nav
+              className="meow-shell-stepper hidden grid-cols-[120px_64px_120px_64px_120px] items-start justify-center lg:grid xl:grid-cols-[132px_72px_132px_72px_132px]"
+              aria-label="Meow Quizz progress"
+            >
+              {stepItems.map((item, index) => {
+                return (
+                  <Fragment key={item.label}>
+                    {index > 0 ? <StepLine highlighted={index <= activeStep} /> : null}
+                    <div className="grid min-w-0 justify-items-center gap-2">
+                      <StepCircle index={index} activeStep={activeStep} />
+                      <StepLabel item={item} index={index} activeStep={activeStep} />
+                    </div>
+                  </Fragment>
+                );
+              })}
+            </nav>
+          ) : null}
 
           <div className="flex shrink-0 items-center justify-end gap-5 text-[#181616] max-sm:gap-2">
             <Link to={customer ? '/meow-quizz/ho-so' : '/dang-nhap'} aria-label="Tài khoản" className="grid h-8 w-8 place-items-center">
@@ -97,20 +103,22 @@ export default function MeowQuizzLayout() {
             </Link>
           </div>
         </div>
-        <nav
-          className="meow-shell-mobile-stepper grid grid-cols-[minmax(72px,1fr)_minmax(28px,48px)_minmax(56px,0.8fr)_minmax(28px,48px)_minmax(56px,0.8fr)] items-start border-t border-[#f4eff8] px-4 pb-3 pt-3 lg:hidden"
-          aria-label="Meow Quizz progress mobile"
-        >
-          {stepItems.map((item, index) => (
-            <Fragment key={item.label}>
-              {index > 0 ? <StepLine compact highlighted={index <= activeStep} /> : null}
-              <div className="grid min-w-0 justify-items-center gap-1.5">
-                <StepCircle compact index={index} activeStep={activeStep} />
-                <StepLabel compact item={item} index={index} activeStep={activeStep} />
-              </div>
-            </Fragment>
-          ))}
-        </nav>
+        {shouldShowStepper ? (
+          <nav
+            className="meow-shell-mobile-stepper grid grid-cols-[minmax(72px,1fr)_minmax(28px,48px)_minmax(56px,0.8fr)_minmax(28px,48px)_minmax(56px,0.8fr)] items-start border-t border-[#f4eff8] px-4 pb-3 pt-3 lg:hidden"
+            aria-label="Meow Quizz progress mobile"
+          >
+            {stepItems.map((item, index) => (
+              <Fragment key={item.label}>
+                {index > 0 ? <StepLine compact highlighted={index <= activeStep} /> : null}
+                <div className="grid min-w-0 justify-items-center gap-1.5">
+                  <StepCircle compact index={index} activeStep={activeStep} />
+                  <StepLabel compact item={item} index={index} activeStep={activeStep} />
+                </div>
+              </Fragment>
+            ))}
+          </nav>
+        ) : null}
       </header>
       <Outlet />
     </div>

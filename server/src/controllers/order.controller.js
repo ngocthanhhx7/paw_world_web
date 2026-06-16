@@ -9,6 +9,8 @@ const {
   verifyWebhook,
 } = require('../services/payos.service');
 
+const PACKAGING_FEE = 5000;
+
 function generateOrderCode() {
   const date = new Date();
   const ymd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(
@@ -80,7 +82,8 @@ exports.create = async (req, res) => {
 
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
   const shippingFee = 0;
-  const total = subtotal;
+  const packagingFee = PACKAGING_FEE;
+  const total = subtotal + packagingFee;
   const orderCode = generateOrderCode();
   const payosOrderCode = paymentMethod === 'bank_transfer' ? buildPayosOrderCode(orderCode) : undefined;
 
@@ -95,6 +98,7 @@ exports.create = async (req, res) => {
     payosOrderCode,
     subtotal,
     shippingFee,
+    packagingFee,
     discount: 0,
     total,
     status: 'pending',

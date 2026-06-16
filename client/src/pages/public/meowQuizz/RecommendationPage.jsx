@@ -21,6 +21,13 @@ const PRODUCT_ROLE_ORDER = {
   treat: 3,
 };
 
+const PRODUCT_ROLE_PORTIONS = {
+  base: { percent: 75, label: 'Hạt khô' },
+  wet: { percent: 20, label: 'Pate dinh dưỡng' },
+  support: { percent: 5, label: 'Bổ trợ' },
+  treat: { percent: 5, label: 'Thanh súp thưởng' },
+};
+
 function pickProducts(recommendation) {
   return recommendation?.products || recommendation?.recommendedProducts || [];
 }
@@ -53,10 +60,34 @@ function quantityDetailText(product) {
 function foodTypeLabel(value) {
   const labels = {
     dry: 'thức ăn khô',
-    wet: 'thức ăn ướt',
-    mixed: 'combo khô và ướt',
+    wet: 'pate hoặc súp dinh dưỡng',
+    mixed: 'combo cân bằng khô và ướt',
   };
   return labels[value] || value || 'meal kit';
+}
+
+function comboSummaryText(summary, catDisplayName, selectedDurationDays) {
+  const fallback = `Dựa trên thông tin về ${catDisplayName}, PawWorld đã thiết kế combo dinh dưỡng cân bằng ${selectedDurationDays} ngày giúp bé có khẩu phần phù hợp hơn.`;
+  const englishBalanced = ['complete', 'and', 'balanced'].join('-');
+  return String(summary || fallback)
+    .replace(new RegExp(`mixed ${englishBalanced}`, 'gi'), 'cân bằng khô và ướt')
+    .replace(new RegExp(englishBalanced, 'gi'), 'dinh dưỡng cân bằng');
+}
+
+function portionPercent(product) {
+  const value = Number(product?.portionPercent);
+  if (Number.isFinite(value) && value > 0) return Math.min(100, value);
+  return PRODUCT_ROLE_PORTIONS[product?.productRole]?.percent || 5;
+}
+
+function formatPortionPercent(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return '0';
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1).replace(/\.0$/, '');
+}
+
+function portionLabel(product) {
+  return product?.portionLabel || product?.roleLabel || PRODUCT_ROLE_PORTIONS[product?.productRole]?.label || 'Bổ trợ';
 }
 
 function caloriesText(value) {
@@ -216,7 +247,39 @@ export default function RecommendationPage() {
   const catDisplayName = profile?.name || recommendation.petName || 'bé mèo';
   const primaryFoodType = foodTypeLabel(primaryProduct.foodType || recommendation.foodType || profile?.currentFoodType);
   const feedingPlan = Array.isArray(recommendation.feedingPlan) ? recommendation.feedingPlan : [];
-  const mainFeedingText = feedingPlan[0]?.amount || feedingPlan[0]?.description || `${primaryFoodType} theo khẩu phần khuyến nghị`;
+  const portionItems = useMemo(() => {
+    const grouped = products.reduce((items, product, index) => {
+      const role = product?.productRole || `product-${index}`;
+      const fallback = PRODUCT_ROLE_PORTIONS[role];
+      const current = items.get(role) || {
+        key: role,
+        role,
+        label: product?.roleLabel || fallback?.label || portionLabel(product),
+        percent: 0,
+        description: product?.servingNote || product?.reason || feedingPlan[index]?.description || `${portionLabel(product)} theo khẩu phần khuyến nghị`,
+      };
+      current.percent += portionPercent(product);
+      items.set(role, current);
+      return items;
+    }, new Map());
+
+    return Array.from(grouped.values())
+      .map((item) => ({ ...item, percent: Math.min(100, item.percent) }))
+      .sort((a, b) => {
+        const roleDelta = (PRODUCT_ROLE_ORDER[a.role] ?? 99) - (PRODUCT_ROLE_ORDER[b.role] ?? 99);
+        if (roleDelta) return roleDelta;
+        return b.percent - a.percent;
+      });
+  }, [feedingPlan, products]);
+  const primaryPortionItem = portionItems[0] || {
+    key: 'fallback',
+    label: primaryFoodType,
+    percent: 100,
+    description: `${primaryFoodType} theo khẩu phần khuyến nghị`,
+  };
+  const portionSummary = portionItems.length
+    ? portionItems.map((item) => `${formatPortionPercent(item.percent)}% ${item.label}`).join(' / ')
+    : `${formatPortionPercent(primaryPortionItem.percent)}% ${primaryPortionItem.label}`;
   const cartableProducts = products.filter(isDbProduct);
   const total = useMemo(() => {
     const explicitTotal = Number(recommendation.total || recommendation.totalPrice || recommendation.estimatedTotal || 0);
@@ -314,7 +377,7 @@ export default function RecommendationPage() {
               đã sẵn sàng!
             </h1>
             <p className="mt-8 max-w-[520px] text-base font-semibold leading-7 text-[#716878]">
-              {recommendation.summary || `Dựa trên thông tin về ${catDisplayName}, chúng tôi đã thiết kế combo ${selectedDurationDays} ngày giúp bé có khẩu phần phù hợp hơn.`}
+              {comboSummaryText(recommendation.summary, catDisplayName, selectedDurationDays)}
             </p>
             <button type="button" onClick={checkout} className="mt-8 h-14 w-[204px] rounded-full bg-[#ffca2d] font-extrabold text-[#6a4a00]">
               Đặt hàng ngay
@@ -397,28 +460,20 @@ export default function RecommendationPage() {
         <section className="mt-14 grid overflow-hidden rounded-[28px] border border-[#e8e4ee] bg-white lg:grid-cols-2">
           <div className="p-12">
             <h3 className="text-2xl font-extrabold">Phân bổ khẩu phần</h3>
-            <p className="mt-6 max-w-[360px] text-sm font-semibold leading-6 text-[#77717e]">Combo {selectedDurationDays} ngày ưu tiên {primaryFoodType} dựa trên sản phẩm được gợi ý.</p>
+            <p className="mt-6 max-w-[360px] text-sm font-semibold leading-6 text-[#77717e]">Combo {selectedDurationDays} ngày phân bổ theo hạt khô, pate dinh dưỡng và phần thưởng nhỏ dựa trên sản phẩm được gợi ý.</p>
             <div className="mt-10 space-y-7">
-              <div className="flex items-start justify-between gap-6">
-                <span className="flex gap-4">
-                  <span className="mt-1 h-3 w-3 rounded-full bg-[#6b43ee]" />
-                  <span>
-                    <strong className="block">{primaryFoodType}</strong>
-                    <span className="text-sm font-semibold text-[#77717e]">{mainFeedingText}</span>
+              {portionItems.map((item, index) => (
+                <div key={item.key} className={index === 0 ? 'flex items-start justify-between gap-6' : 'flex items-start justify-between gap-6 text-[#77717e]'}>
+                  <span className="flex gap-4">
+                    <span className={`mt-1 h-3 w-3 rounded-full ${index === 0 ? 'bg-[#6b43ee]' : index === 1 ? 'bg-[#70ca9b]' : 'bg-[#ffca2d]'}`} />
+                    <span>
+                      <strong className={`block ${index === 0 ? '' : 'text-[#77717e]'}`}>{item.label}</strong>
+                      <span className="text-sm font-semibold text-[#77717e]">{item.description}</span>
+                    </span>
                   </span>
-                </span>
-                <strong>100%</strong>
-              </div>
-              <div className="flex items-start justify-between gap-6 text-[#77717e]">
-                <span className="flex gap-4">
-                  <span className="mt-1 h-3 w-3 rounded-full bg-[#e1dfe8]" />
-                  <span>
-                    <strong className="block text-[#77717e]">Sản phẩm bổ sung</strong>
-                    <span className="text-sm font-semibold">{feedingPlan[1]?.description || `Hiện chưa có gợi ý bổ sung riêng cho ${catDisplayName}`}</span>
-                  </span>
-                </span>
-                <strong>0%</strong>
-              </div>
+                  <strong>{formatPortionPercent(item.percent)}%</strong>
+                </div>
+              ))}
             </div>
             <div className="mt-8 flex gap-3 rounded-[18px] bg-[#f4efff] p-5 text-sm font-bold leading-6 text-[#6b43ee]">
               <Info className="shrink-0" size={18} />
@@ -429,7 +484,7 @@ export default function RecommendationPage() {
             <div className="grid h-[220px] w-[220px] place-items-center rounded-full border-[16px] border-[#ffca2d] bg-[#f5f3fb] shadow-lg">
               <div className="text-center">
                 <Waves className="mx-auto text-[#a98dff]" size={34} />
-                <p className="mt-4 text-2xl font-extrabold">100% Khô</p>
+                <p className="mt-4 px-5 text-xl font-extrabold leading-tight">{portionSummary}</p>
               </div>
             </div>
           </div>

@@ -12,7 +12,8 @@ export default function CartPage() {
   const items = cart?.items || [];
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);
   const shippingFee = 0;
-  const total = subtotal;
+  const packagingFee = 5000;
+  const total = subtotal + packagingFee;
 
   if (!items.length) {
     return (
@@ -93,6 +94,10 @@ export default function CartPage() {
               <span className="font-semibold">
                 {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
               </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-cocoa-400">Phí đóng gói</span>
+              <span className="font-semibold">{formatPrice(packagingFee)}</span>
             </div>
             <div className="border-t border-cream-200 pt-3 mt-3 flex justify-between text-base">
               <span className="text-cocoa-500">Tổng cộng</span>

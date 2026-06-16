@@ -26,3 +26,10 @@ test('MeowQuizzLayout only disables sticky header on pet profile edit route', ()
   assert.match(source, /\/\^\\\/meow-quizz\\\/ho-so\\\/\[\^\/\]\+\\\/chinh-sua\$\/\.test\(pathname\)/);
   assert.match(source, /isEditingPetProfile \? 'relative z-40' : 'sticky top-0 z-40'/);
 });
+
+test('MeowQuizzLayout hides quiz steppers only on pet profile edit route', () => {
+  assert.match(source, /const shouldShowStepper = !isEditingPetProfile/);
+  assert.match(source, /shouldShowStepper \? \(\s*<nav\s+className="meow-shell-stepper/);
+  assert.match(source, /shouldShowStepper \? \(\s*<nav\s+className="meow-shell-mobile-stepper/);
+  assert.match(source, /isEditingPetProfile\s+\?\s+'grid h-20 grid-cols-\[minmax\(0,1fr\)_auto\]/);
+});

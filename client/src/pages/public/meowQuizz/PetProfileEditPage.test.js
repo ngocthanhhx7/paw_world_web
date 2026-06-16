@@ -11,3 +11,9 @@ test('PetProfileEditPage keeps save actions in normal form flow', () => {
   assert.doesNotMatch(source, /fixed bottom-0/);
   assert.doesNotMatch(source, /pb-\[calc\(7rem\+env\(safe-area-inset-bottom\)\)\]/);
 });
+
+test('PetProfileEditPage keeps floating field labels above controls', () => {
+  assert.match(source, /pointer-events-none absolute -top-2 left-4 z-10/);
+  assert.match(source, /rounded-sm bg-\[#fffefa\]/);
+  assert.match(source, /text-xs font-medium leading-4 text-\[#9a96a4\]/);
+});

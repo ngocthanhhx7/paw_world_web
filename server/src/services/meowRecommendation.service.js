@@ -19,6 +19,13 @@ const PRODUCT_ROLE_PRIORITY = {
   treat: 3,
 };
 
+const PORTION_BY_PRODUCT_ROLE = {
+  base: { percent: 75, label: 'Hạt khô', roleLabel: 'Thức ăn khô (hạt)' },
+  wet: { percent: 20, label: 'Pate dinh dưỡng', roleLabel: 'Pate dinh dưỡng' },
+  support: { percent: 5, label: 'Sản phẩm bổ trợ', roleLabel: 'Sản phẩm bổ trợ' },
+  treat: { percent: 5, label: 'Thanh súp thưởng', roleLabel: 'Thanh súp thưởng' },
+};
+
 const TREAT_ROLE_TERMS = [
   'snack',
   'treat',
@@ -240,9 +247,13 @@ function averageDailyCalories(profile) {
   return 200;
 }
 
-function resolveRecommendationQuantity(product = {}, profile = {}, durationDays = 7) {
+function resolveRecommendationQuantity(product = {}, profile = {}, durationDays = 7, portionPercentOverride = null) {
   const requestedDays = Math.max(1, Number(durationDays) || 7);
   const packageInfo = parsePackageQuantity(product);
+  const productRole = product.productRole || classifyProductRole(product);
+  const portion = PORTION_BY_PRODUCT_ROLE[productRole] || PORTION_BY_PRODUCT_ROLE.support;
+  const portionPercent = Math.max(1, Number(portionPercentOverride) || portion.percent);
+  const portionKcalPerDay = Math.round((averageDailyCalories(profile) * portionPercent) / 100);
 
   if (packageInfo?.basis === 'duration_days') {
     const quantity = Math.max(1, Math.ceil(requestedDays / packageInfo.daysPerUnit));
@@ -251,21 +262,29 @@ function resolveRecommendationQuantity(product = {}, profile = {}, durationDays 
       packageLabel: packageInfo.packageLabel,
       quantityBasis: packageInfo.basis,
       estimatedDaysCovered: Math.round(quantity * packageInfo.daysPerUnit),
+      portionPercent,
+      portionLabel: portion.label,
+      roleLabel: portion.roleLabel,
+      portionKcalPerDay,
       servingNote: `Tính theo gói ${packageInfo.packageLabel} cho combo ${requestedDays} ngày.`,
     };
   }
 
   if (packageInfo?.basis === 'weight_grams') {
-    const dailyKcal = averageDailyCalories(profile);
+    const effectivePortionKcalPerDay = Math.max(1, portionKcalPerDay);
     const kcalPerGram = KCAL_PER_GRAM_BY_FOOD_TYPE[product.foodType] || KCAL_PER_GRAM_BY_FOOD_TYPE.mixed;
     const caloriesPerPackage = Math.max(1, packageInfo.amountGrams * kcalPerGram);
-    const quantity = Math.max(1, Math.ceil((dailyKcal * requestedDays) / caloriesPerPackage));
+    const quantity = Math.max(1, Math.ceil((effectivePortionKcalPerDay * requestedDays) / caloriesPerPackage));
     return {
       quantity,
       packageLabel: packageInfo.packageLabel,
       quantityBasis: packageInfo.basis,
-      estimatedDaysCovered: Math.max(1, Math.round((quantity * caloriesPerPackage) / dailyKcal)),
-      servingNote: `Tính theo ${packageInfo.packageLabel}, ước tính ${trimNumber(kcalPerGram)} kcal/g cho ${requestedDays} ngày.`,
+      estimatedDaysCovered: Math.max(1, Math.round((quantity * caloriesPerPackage) / effectivePortionKcalPerDay)),
+      portionPercent,
+      portionLabel: portion.label,
+      roleLabel: portion.roleLabel,
+      portionKcalPerDay,
+      servingNote: `Tính theo ${packageInfo.packageLabel}, ${portion.label} chiếm ${trimNumber(portionPercent)}% khẩu phần, ước tính ${trimNumber(kcalPerGram)} kcal/g cho ${requestedDays} ngày.`,
     };
   }
 
@@ -274,6 +293,10 @@ function resolveRecommendationQuantity(product = {}, profile = {}, durationDays 
     packageLabel: '',
     quantityBasis: 'manual_review',
     estimatedDaysCovered: null,
+    portionPercent,
+    portionLabel: portion.label,
+    roleLabel: portion.roleLabel,
+    portionKcalPerDay,
     servingNote: 'Cần kiểm tra thủ công vì sản phẩm chưa có định lượng rõ ràng.',
   };
 }
@@ -381,7 +404,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
     petName: profile.name,
     durationDays,
     dailyCalories,
-    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo ${profile.currentFoodType || 'kết hợp'} complete-and-balanced phù hợp giai đoạn sống, theo dõi BCS và chuyển đổi thức ăn từ từ để hạn chế rối loạn tiêu hóa.`,
+    summary: `${profile.name || 'Bé mèo'} nên bắt đầu với combo dinh dưỡng cân bằng gồm hạt khô, pate và phần thưởng nhỏ phù hợp giai đoạn sống, theo dõi BCS và chuyển đổi thức ăn từ từ để hạn chế rối loạn tiêu hóa.`,
     feedingPlan: [
       'Chia khẩu phần thành 2-3 bữa mỗi ngày và đo bằng cốc tiêu chuẩn.',
       'Trộn thức ăn mới tăng dần trong 5-7 ngày, không đổi khẩu phần quá đột ngột.',
@@ -389,7 +412,11 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
       'Ưu tiên khẩu phần có protein động vật phù hợp, taurine, chất béo cân bằng và không chứa dị nguyên đã khai báo.',
     ],
     warnings: buildNutritionWarnings(profile),
-    products: products.slice(0, 3).map((product, index) => toRecommendationProduct(product, {}, durationDays, index, profile)),
+    products: applySharedPortionQuantities(
+      products.slice(0, 3).map((product, index) => toRecommendationProduct(product, {}, durationDays, index, profile)),
+      profile,
+      durationDays,
+    ),
   };
 }
 
@@ -430,8 +457,48 @@ function enrichRecommendationProducts(products = [], durationDays = 7) {
     packageLabel: product.packageLabel || '',
     quantityBasis: product.quantityBasis || 'manual_review',
     estimatedDaysCovered: product.estimatedDaysCovered || null,
+    portionPercent: product.portionPercent || PORTION_BY_PRODUCT_ROLE[product.productRole || classifyProductRole(product)]?.percent || 5,
+    portionLabel: product.portionLabel || PORTION_BY_PRODUCT_ROLE[product.productRole || classifyProductRole(product)]?.label || 'Sản phẩm bổ trợ',
+    roleLabel: product.roleLabel || PORTION_BY_PRODUCT_ROLE[product.productRole || classifyProductRole(product)]?.roleLabel || 'Sản phẩm bổ trợ',
+    portionKcalPerDay: product.portionKcalPerDay || null,
     servingNote: product.servingNote || 'Cần kiểm tra thủ công vì sản phẩm chưa có định lượng rõ ràng.',
   }));
+}
+
+function applySharedPortionQuantities(products = [], profile = {}, durationDays = 7) {
+  const roleCounts = products.reduce((counts, product) => {
+    const role = product.productRole || classifyProductRole(product);
+    counts.set(role, (counts.get(role) || 0) + 1);
+    return counts;
+  }, new Map());
+
+  return products.map((product) => {
+    const role = product.productRole || classifyProductRole(product);
+    const basePortion = PORTION_BY_PRODUCT_ROLE[role] || PORTION_BY_PRODUCT_ROLE.support;
+    const roleCount = Math.max(1, roleCounts.get(role) || 1);
+    const sharedPercent = basePortion.percent / roleCount;
+    const quantityMeta = resolveRecommendationQuantity(
+      { ...product, weight: product.weight || product.packageLabel, productRole: role },
+      profile,
+      durationDays,
+      sharedPercent,
+    );
+
+    return {
+      ...product,
+      productRole: role,
+      quantity: quantityMeta.quantity,
+      daysCovered: Math.max(1, Number(durationDays) || 7),
+      packageLabel: quantityMeta.packageLabel,
+      quantityBasis: quantityMeta.quantityBasis,
+      estimatedDaysCovered: quantityMeta.estimatedDaysCovered,
+      portionPercent: quantityMeta.portionPercent,
+      portionLabel: quantityMeta.portionLabel,
+      roleLabel: quantityMeta.roleLabel,
+      portionKcalPerDay: quantityMeta.portionKcalPerDay,
+      servingNote: quantityMeta.servingNote,
+    };
+  });
 }
 
 function toRecommendationProduct(catalogProduct, selectedProduct = {}, durationDays = 7, index = 0, profile = {}) {
@@ -454,6 +521,10 @@ function toRecommendationProduct(catalogProduct, selectedProduct = {}, durationD
     packageLabel: quantityMeta.packageLabel,
     quantityBasis: quantityMeta.quantityBasis,
     estimatedDaysCovered: quantityMeta.estimatedDaysCovered,
+    portionPercent: quantityMeta.portionPercent,
+    portionLabel: quantityMeta.portionLabel,
+    roleLabel: quantityMeta.roleLabel,
+    portionKcalPerDay: quantityMeta.portionKcalPerDay,
     servingNote: quantityMeta.servingNote,
   };
 }
@@ -520,7 +591,8 @@ function ensureBalancedRecommendationProducts(reconciledProducts = [], catalog =
     addRecommendationProduct(toRecommendationProduct(product, {}, durationDays, selected.length, profile));
   });
 
-  return selected.length ? selected : reconciledProducts;
+  const recommendationProducts = selected.length ? selected : reconciledProducts;
+  return applySharedPortionQuantities(recommendationProducts, profile, durationDays);
 }
 
 async function buildRecommendationForProfile(profile, options = {}) {

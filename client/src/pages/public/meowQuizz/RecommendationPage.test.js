@@ -75,3 +75,15 @@ test('RecommendationPage displays server-normalized package quantity details', (
   assert.match(source, /product\?\.servingNote/);
   assert.match(source, /Số lượng trong combo/);
 });
+
+test('RecommendationPage renders Vietnamese combo summary and dynamic portion distribution', () => {
+  assert.match(source, /comboSummaryText/);
+  assert.match(source, /portionItems/);
+  assert.match(source, /portionPercent/);
+  assert.match(source, /portionLabel/);
+  assert.match(source, /products\.reduce\(\(items, product, index\)/);
+  assert.match(source, /current\.percent \+= portionPercent\(product\)/);
+  assert.match(source, /formatPortionPercent/);
+  assert.doesNotMatch(source, /complete-and-balanced/);
+  assert.doesNotMatch(source, /100% Khô/);
+});

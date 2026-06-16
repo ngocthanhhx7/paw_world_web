@@ -19,7 +19,7 @@ const allergyOptions = ['Không có', 'Cá', 'Bò', 'Thỏ', 'Đậu nành', 'Gl
 function Field({ label, children }) {
   return (
     <label className="relative block">
-      <span className="absolute -top-2 left-4 bg-[#fffefa] px-1 text-xs font-medium text-[#9a96a4]">{label}</span>
+      <span className="pointer-events-none absolute -top-2 left-4 z-10 rounded-sm bg-[#fffefa] px-1 text-xs font-medium leading-4 text-[#9a96a4]">{label}</span>
       {children}
     </label>
   );
