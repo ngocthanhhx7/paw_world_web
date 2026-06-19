@@ -44,7 +44,7 @@ export default function RegisterPage() {
         <PrimaryButton loading={loading}>Đăng ký</PrimaryButton>
       </form>
 
-      <SocialButtons />
+      <SocialButtons onGoogleSuccess={() => navigate(redirect, { replace: true })} />
 
       <p className="mt-7 text-center text-[12px] font-semibold text-[#6c5d50]">
         Bạn đã có tài khoản?{' '}

@@ -38,6 +38,7 @@ export const authApi = {
 export const customerAuthApi = {
   register: (payload) => api.post('/auth/customer/register', payload).then((r) => r.data),
   login: (payload) => api.post('/auth/customer/login', payload).then((r) => r.data),
+  googleLogin: (payload) => api.post('/auth/customer/google', payload).then((r) => r.data),
   me: () => api.get('/auth/customer/me').then((r) => r.data),
   logout: () => api.post('/auth/customer/logout').then((r) => r.data),
   forgotPassword: (payload) =>
@@ -86,6 +87,11 @@ export const adminApi = {
   deleteLead: (id) => api.delete(`/admin/leads/${id}`).then((r) => r.data),
   // stats
   overview: () => api.get('/admin/stats/overview').then((r) => r.data),
+  // customers
+  listCustomers: (params) => api.get('/admin/customers', { params }).then((r) => r.data),
+  getCustomer: (id) => api.get(`/admin/customers/${id}`).then((r) => r.data),
+  updateCustomerStatus: (id, payload) =>
+    api.patch(`/admin/customers/${id}/status`, payload).then((r) => r.data),
 };
 
 

@@ -30,6 +30,7 @@ import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminProductsPage from '@/pages/admin/AdminProductsPage';
 import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage';
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage';
+import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminLeadsPage from '@/pages/admin/AdminLeadsPage';
 import RequireAdmin from '@/components/admin/RequireAdmin';
 
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
         <Route path="leads" element={<AdminLeadsPage />} />
       </Route>
     </Routes>

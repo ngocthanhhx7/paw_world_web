@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
@@ -7,6 +7,32 @@ import AuthShell from './AuthShell';
 import { useCustomerAuthStore } from '@/store/customerAuthStore';
 
 const socialToast = () => toast('Tính năng đang phát triển');
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+let googleScriptPromise;
+
+function loadGoogleIdentityScript() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  if (googleScriptPromise) return googleScriptPromise;
+
+  googleScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existing) {
+      existing.addEventListener('load', resolve, { once: true });
+      existing.addEventListener('error', reject, { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+
+  return googleScriptPromise;
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -47,7 +73,7 @@ export default function LoginPage() {
         <PrimaryButton loading={loading}>Đăng nhập</PrimaryButton>
       </form>
 
-      <SocialButtons />
+      <SocialButtons onGoogleSuccess={() => navigate(redirect, { replace: true })} />
 
       <p className="mt-7 text-center text-[12px] font-semibold text-[#6c5d50]">
         Bạn chưa có tài khoản?{' '}
@@ -85,17 +111,90 @@ export function PrimaryButton({ loading, children }) {
   );
 }
 
-export function SocialButtons() {
+export function SocialButtons({ onGoogleSuccess }) {
+  const googleButtonRef = useRef(null);
+  const onGoogleSuccessRef = useRef(onGoogleSuccess);
+  const googleLogin = useCustomerAuthStore((s) => s.googleLogin);
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    onGoogleSuccessRef.current = onGoogleSuccess;
+  }, [onGoogleSuccess]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!googleClientId) return undefined;
+
+    loadGoogleIdentityScript()
+      .then(() => {
+        if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
+
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            if (!response?.credential) {
+              toast.error('Dang nhap Google khong hop le');
+              return;
+            }
+
+            setGoogleLoading(true);
+            try {
+              await googleLogin(response.credential);
+              toast.success('Đăng nhập thành công');
+              onGoogleSuccessRef.current?.();
+            } catch (err) {
+              toast.error(err?.response?.data?.message || 'Đăng nhập Google thất bại');
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+        });
+
+        googleButtonRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline',
+          size: 'large',
+          shape: 'pill',
+          text: 'continue_with',
+          width: Math.max(240, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 320)),
+          locale: 'vi',
+        });
+        setGoogleReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Khong tai duoc Google Login');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [googleLogin]);
+
   return (
     <div className="mt-6 space-y-3">
       <button type="button" onClick={socialToast} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0]">
         <img src="/assets/icon/khac/ic_baseline-facebook.svg" alt="" className="h-5 w-5" />
         Tiếp tục với Facebook
       </button>
-      <button type="button" onClick={socialToast} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0]">
-        <span className="grid h-5 w-5 place-items-center rounded-full bg-[#f5f5f5] text-[13px] font-black text-[#4285f4]">G</span>
-        Tiếp tục với Google
-      </button>
+      <div className="min-h-12 w-full">
+        {googleClientId ? (
+          <div className="relative min-h-12 w-full overflow-hidden rounded-full">
+            <div ref={googleButtonRef} className="flex min-h-12 w-full items-center justify-center" />
+            {googleLoading || !googleReady ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020]">
+                {googleLoading ? 'Đang xử lý...' : 'Tiếp tục với Google'}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <button type="button" onClick={() => toast.error('Google Login chua duoc cau hinh')} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0]">
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-[#f5f5f5] text-[13px] font-black text-[#4285f4]">G</span>
+            Tiếp tục với Google
+          </button>
+        )}
+      </div>
     </div>
   );
 }

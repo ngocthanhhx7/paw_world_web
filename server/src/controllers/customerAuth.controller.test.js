@@ -101,6 +101,191 @@ test('customerRegister creates a customer, sets paw_customer_token cookie, and r
   assert.equal(res.cookies[0].options.httpOnly, true);
 });
 
+test('customerGoogleLogin rejects missing credential', async () => {
+  const req = { body: {} };
+  const res = createMockRes();
+
+  await authController.customerGoogleLogin(req, res);
+
+  assert.equal(res.statusCode, 400);
+  assert.deepEqual(res.body, { message: 'Thieu thong tin dang nhap Google' });
+});
+
+test('customerGoogleLogin reports missing server Google client id', async () => {
+  const req = { body: { credential: 'google-credential' } };
+  const res = createMockRes();
+  const originalClientId = process.env.GOOGLE_CLIENT_ID;
+
+  delete process.env.GOOGLE_CLIENT_ID;
+
+  try {
+    await authController.customerGoogleLogin(req, res);
+  } finally {
+    process.env.GOOGLE_CLIENT_ID = originalClientId;
+  }
+
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(res.body, { message: 'Dang nhap Google chua duoc cau hinh' });
+});
+
+test('customerGoogleLogin rejects invalid Google credential', async () => {
+  const req = { body: { credential: 'bad-google-credential' } };
+  const res = createMockRes();
+  const originalClientId = process.env.GOOGLE_CLIENT_ID;
+
+  process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+  authController.__setGoogleVerifierForTest(async () => {
+    throw new Error('invalid token');
+  });
+
+  try {
+    await authController.customerGoogleLogin(req, res);
+  } finally {
+    process.env.GOOGLE_CLIENT_ID = originalClientId;
+    authController.__setGoogleVerifierForTest(null);
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Dang nhap Google khong hop le' });
+});
+
+test('customerGoogleLogin rejects unverified Google email', async () => {
+  const req = { body: { credential: 'google-credential' } };
+  const res = createMockRes();
+  const originalClientId = process.env.GOOGLE_CLIENT_ID;
+
+  process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+  authController.__setGoogleVerifierForTest(async () => ({
+    sub: 'google-sub-1',
+    email: 'sen@example.com',
+    email_verified: false,
+    name: 'Sen Google',
+    picture: 'https://example.com/avatar.png',
+  }));
+
+  try {
+    await authController.customerGoogleLogin(req, res);
+  } finally {
+    process.env.GOOGLE_CLIENT_ID = originalClientId;
+    authController.__setGoogleVerifierForTest(null);
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Email Google chua duoc xac minh' });
+});
+
+test('customerGoogleLogin creates a customer for a verified new Google email', async () => {
+  const req = { body: { credential: 'google-credential' } };
+  const res = createMockRes();
+  const originalClientId = process.env.GOOGLE_CLIENT_ID;
+  const originalFindOne = Customer.findOne;
+  const originalCreate = Customer.create;
+
+  process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+  authController.__setGoogleVerifierForTest(async (credential, audience) => {
+    assert.equal(credential, 'google-credential');
+    assert.equal(audience, 'google-client-id');
+    return {
+      sub: 'google-sub-1',
+      email: ' Sen@Example.com ',
+      email_verified: true,
+      name: 'Sen Google',
+      picture: 'https://example.com/avatar.png',
+    };
+  });
+
+  Customer.findOne = async (query) => {
+    assert.deepEqual(query, { email: 'sen@example.com' });
+    return null;
+  };
+
+  Customer.create = async (payload) => {
+    assert.equal(payload.fullName, 'Sen Google');
+    assert.equal(payload.email, 'sen@example.com');
+    assert.equal(payload.googleSub, 'google-sub-1');
+    assert.equal(payload.avatar, 'https://example.com/avatar.png');
+    assert.ok(payload.emailVerifiedAt instanceof Date);
+    assert.ok(payload.lastLoginAt instanceof Date);
+    assert.equal(Object.hasOwn(payload, 'password'), false);
+    return { _id: 'customer-google-1', phone: '', tokenVersion: 0, ...payload };
+  };
+
+  try {
+    await authController.customerGoogleLogin(req, res);
+  } finally {
+    process.env.GOOGLE_CLIENT_ID = originalClientId;
+    Customer.findOne = originalFindOne;
+    Customer.create = originalCreate;
+    authController.__setGoogleVerifierForTest(null);
+  }
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.cookies[0].name, 'paw_customer_token');
+  assert.deepEqual(res.body.customer, {
+    id: 'customer-google-1',
+    fullName: 'Sen Google',
+    email: 'sen@example.com',
+    phone: '',
+    avatar: 'https://example.com/avatar.png',
+  });
+});
+
+test('customerGoogleLogin links and logs in an existing customer without changing password', async () => {
+  const req = { body: { credential: 'google-credential' } };
+  const res = createMockRes();
+  const originalClientId = process.env.GOOGLE_CLIENT_ID;
+  const originalFindOne = Customer.findOne;
+  const customer = {
+    _id: 'existing-customer-1',
+    fullName: 'Existing Sen',
+    email: 'sen@example.com',
+    password: 'hashed-password',
+    phone: '',
+    avatar: '',
+    isActive: true,
+    tokenVersion: 2,
+    googleSub: '',
+    emailVerifiedAt: null,
+    lastLoginAt: null,
+    saveCalls: 0,
+    async save() {
+      this.saveCalls += 1;
+      return this;
+    },
+  };
+
+  process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+  authController.__setGoogleVerifierForTest(async () => ({
+    sub: 'google-sub-1',
+    email: 'sen@example.com',
+    email_verified: true,
+    name: 'Sen Google',
+    picture: 'https://example.com/avatar.png',
+  }));
+
+  Customer.findOne = async (query) => {
+    assert.deepEqual(query, { email: 'sen@example.com' });
+    return customer;
+  };
+
+  try {
+    await authController.customerGoogleLogin(req, res);
+  } finally {
+    process.env.GOOGLE_CLIENT_ID = originalClientId;
+    Customer.findOne = originalFindOne;
+    authController.__setGoogleVerifierForTest(null);
+  }
+
+  assert.equal(customer.password, 'hashed-password');
+  assert.equal(customer.googleSub, 'google-sub-1');
+  assert.equal(customer.avatar, 'https://example.com/avatar.png');
+  assert.ok(customer.emailVerifiedAt instanceof Date);
+  assert.ok(customer.lastLoginAt instanceof Date);
+  assert.equal(customer.saveCalls, 1);
+  assert.equal(res.cookies[0].name, 'paw_customer_token');
+  assert.equal(res.body.customer.id, 'existing-customer-1');
+});
+
 test('customerForgotPassword returns a generic response and exposes resetUrl outside production', async () => {
   const req = {
     body: {

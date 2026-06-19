@@ -13,9 +13,17 @@ const customerSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Email khong hop le'],
     },
-    password: { type: String, required: true, minlength: 6, select: false },
+    password: {
+      type: String,
+      required() {
+        return !this.googleSub;
+      },
+      minlength: 6,
+      select: false,
+    },
     phone: { type: String, default: '', trim: true },
     avatar: { type: String, default: '' },
+    googleSub: { type: String, default: '', trim: true, index: true },
     isActive: { type: Boolean, default: true },
     tokenVersion: { type: Number, default: 0 },
     emailVerifiedAt: { type: Date, default: null },

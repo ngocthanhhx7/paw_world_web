@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Tag, ClipboardList, Users, LogOut } from 'lucide-react';
+import { ClipboardList, LayoutDashboard, LogOut, Package, Tag, UserRound, Users } from 'lucide-react';
 
 import { useAuthStore } from '@/store/authStore';
 import { cx } from '@/utils/format';
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/admin/products', label: 'Sản phẩm', icon: Package },
   { to: '/admin/categories', label: 'Danh mục', icon: Tag },
   { to: '/admin/orders', label: 'Đơn hàng', icon: ClipboardList },
+  { to: '/admin/users', label: 'Khách hàng', icon: UserRound },
   { to: '/admin/leads', label: 'Khách cần liên hệ', icon: Users },
 ];
 

@@ -1,7 +1,12 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const Admin = require('../models/Admin');
 const Customer = require('../models/Customer');
+const { sendMail } = require('../config/mail');
+
+const googleOAuthClient = new OAuth2Client();
+let googleVerifierForTest = null;
 
 function signToken(admin) {
   return jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, {
@@ -36,6 +41,26 @@ function setCustomerCookie(res, token) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
+}
+
+async function verifyGoogleCredential(credential, audience) {
+  if (googleVerifierForTest) {
+    return googleVerifierForTest(credential, audience);
+  }
+
+  const ticket = await googleOAuthClient.verifyIdToken({
+    idToken: credential,
+    audience,
+  });
+  return ticket.getPayload();
+}
+
+function normalizeGoogleEmail(email) {
+  return String(email || '').toLowerCase().trim();
+}
+
+function fallbackGoogleName(email) {
+  return normalizeGoogleEmail(email).split('@')[0] || 'PawWorld User';
 }
 
 exports.login = async (req, res) => {
@@ -131,6 +156,62 @@ exports.customerLogin = async (req, res) => {
   return res.json({ customer: customerPayload(customer) });
 };
 
+exports.customerGoogleLogin = async (req, res) => {
+  const { credential } = req.body || {};
+  if (!credential) {
+    return res.status(400).json({ message: 'Thieu thong tin dang nhap Google' });
+  }
+
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  if (!googleClientId || googleClientId === 'undefined') {
+    return res.status(500).json({ message: 'Dang nhap Google chua duoc cau hinh' });
+  }
+
+  let googlePayload;
+  try {
+    googlePayload = await verifyGoogleCredential(credential, googleClientId);
+  } catch (err) {
+    return res.status(401).json({ message: 'Dang nhap Google khong hop le' });
+  }
+
+  if (!googlePayload?.email_verified) {
+    return res.status(401).json({ message: 'Email Google chua duoc xac minh' });
+  }
+
+  const normalizedEmail = normalizeGoogleEmail(googlePayload.email);
+  if (!normalizedEmail) {
+    return res.status(401).json({ message: 'Dang nhap Google khong hop le' });
+  }
+
+  const now = new Date();
+  let customer = await Customer.findOne({ email: normalizedEmail });
+  if (customer && !customer.isActive) {
+    return res.status(401).json({ message: 'Tai khoan khong ton tai hoac da bi khoa' });
+  }
+
+  if (!customer) {
+    customer = await Customer.create({
+      fullName: String(googlePayload.name || '').trim() || fallbackGoogleName(normalizedEmail),
+      email: normalizedEmail,
+      avatar: googlePayload.picture || '',
+      googleSub: googlePayload.sub || '',
+      emailVerifiedAt: now,
+      lastLoginAt: now,
+    });
+  } else {
+    customer.googleSub = customer.googleSub || googlePayload.sub || '';
+    customer.avatar = customer.avatar || googlePayload.picture || '';
+    customer.emailVerifiedAt = customer.emailVerifiedAt || now;
+    customer.lastLoginAt = now;
+    await customer.save();
+  }
+
+  const token = signCustomerToken(customer);
+  setCustomerCookie(res, token);
+
+  return res.json({ customer: customerPayload(customer) });
+};
+
 exports.customerMe = async (req, res) => {
   return res.json({ customer: customerPayload(req.customer) });
 };
@@ -160,6 +241,17 @@ exports.customerForgotPassword = async (req, res) => {
     return res.json({ ...response, resetUrl: `/dat-lai-mat-khau/${token}` });
   }
 
+  const resetLink = `${process.env.CLIENT_RESET_PASSWORD_URL || ''}/${token}`;
+  try {
+    await sendMail({
+      to: customer.email,
+      subject: 'Dat lai mat khau PawWorld',
+      html: `<p>Ban da yeu cau dat lai mat khau tai PawWorld.</p><p>Nhan vao lien ket ben duoi de dat lai mat khau:</p><p><a href="${resetLink}">${resetLink}</a></p><p>Lien ket co hieu luc trong 30 phut.</p>`,
+    });
+  } catch (err) {
+    console.error('[forgot-password] Failed to send email:', err.message);
+  }
+
   return res.json(response);
 };
 
@@ -185,4 +277,8 @@ exports.customerResetPassword = async (req, res) => {
   await customer.save();
 
   return res.json({ message: 'Da cap nhat mat khau' });
+};
+
+exports.__setGoogleVerifierForTest = (verifier) => {
+  googleVerifierForTest = verifier;
 };

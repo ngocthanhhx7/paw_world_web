@@ -24,6 +24,12 @@ export const useCustomerAuthStore = create((set) => ({
     return data.customer;
   },
 
+  googleLogin: async (credential) => {
+    const data = await customerAuthApi.googleLogin({ credential });
+    set({ customer: data.customer || null });
+    return data.customer;
+  },
+
   register: async (payload) => {
     const data = await customerAuthApi.register(payload);
     set({ customer: data.customer || null });
