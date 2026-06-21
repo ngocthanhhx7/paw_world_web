@@ -15,6 +15,7 @@ const {
 } = require('./meowRecommendation.service');
 const {
   NUTRITION_REFERENCE_SOURCES,
+  estimateDailyCalories,
   getNutritionGroundingForPrompt,
 } = require('./meowNutritionKnowledge');
 
@@ -87,6 +88,8 @@ test('parsePackageQuantity reads package size from weight before product name', 
     packageLabel: '6 x 85g',
     basis: 'weight_grams',
     amountGrams: 510,
+    unitCount: 6,
+    unitGrams: 85,
     daysPerUnit: null,
   });
 });
@@ -101,6 +104,26 @@ test('parsePackageQuantity handles multi-pack, ml, and day packages', () => {
     basis: 'duration_days',
     amountGrams: null,
     daysPerUnit: 7,
+  });
+});
+
+test('estimateDailyCalories follows PDF MER guidance from existing profile fields', () => {
+  assert.deepEqual(estimateDailyCalories({ weightKg: 4, ageYears: 3, ageMonths: 0, activityLevel: 'active', weightGoal: 'maintain' }), {
+    min: 228,
+    max: 278,
+    basis: 'NRC/FEDIAF MER 100 x kg^0.67 adjusted by age, activity, and weight goal',
+  });
+
+  assert.deepEqual(estimateDailyCalories({ weightKg: 4, ageYears: 3, ageMonths: 0, activityLevel: 'low', weightGoal: 'lose' }), {
+    min: 171,
+    max: 209,
+    basis: 'NRC/FEDIAF MER 100 x kg^0.67 adjusted by age, activity, and weight goal',
+  });
+
+  assert.deepEqual(estimateDailyCalories({ weightKg: 1.2, ageYears: 0, ageMonths: 3, activityLevel: 'active', weightGoal: 'maintain' }), {
+    min: 229,
+    max: 279,
+    basis: 'NRC/FEDIAF MER 100 x kg^0.67 adjusted by age, activity, and weight goal',
   });
 });
 
@@ -122,15 +145,60 @@ test('resolveRecommendationQuantity scales food packages by role portion instead
   const wetResult = resolveRecommendationQuantity(wetProduct, profile, 30);
   const treatResult = resolveRecommendationQuantity(treatProduct, profile, 7);
 
-  assert.equal(wetResult.quantity, 17);
+  assert.equal(wetResult.quantity, 20);
   assert.equal(wetResult.portionPercent, 20);
   assert.equal(wetResult.portionLabel, 'Pate dinh dưỡng');
   assert.match(wetResult.servingNote, /20%/);
 
-  assert.equal(treatResult.quantity, 7);
+  assert.equal(treatResult.quantity, 10);
   assert.equal(treatResult.portionPercent, 5);
   assert.equal(treatResult.portionLabel, 'Thanh súp thưởng');
   assert.match(treatResult.servingNote, /5%/);
+});
+
+test('resolveRecommendationQuantity infers PDF energy density for dry, pate, mousse, gravy, and soup treats', () => {
+  const dryResult = resolveRecommendationQuantity(
+    { name: 'Hat kho Mr. Vet 1kg', weight: '1kg', foodType: 'dry', productRole: 'base' },
+    profile,
+    30,
+  );
+  const mrVetPateResult = resolveRecommendationQuantity(
+    { name: 'Pate Mr. Vet goi 80g', weight: '80g', foodType: 'wet', productRole: 'wet', tags: ['pate'] },
+    profile,
+    30,
+  );
+  const neekaMousseResult = resolveRecommendationQuantity(
+    { name: 'Pate Neeka Mousse lon 85g', weight: '85g', foodType: 'wet', productRole: 'wet', tags: ['pate', 'mousse'] },
+    profile,
+    30,
+  );
+  const neekaGravyResult = resolveRecommendationQuantity(
+    { name: 'Pate Neeka Gravy lon 85g', weight: '85g', foodType: 'wet', productRole: 'wet', tags: ['pate', 'gravy'] },
+    profile,
+    30,
+  );
+  const soupTreatResult = resolveRecommendationQuantity(
+    { name: 'Sup thuong Neeka 12g', weight: '12g', foodType: 'wet', productRole: 'treat', tags: ['snack', 'thanh sup'] },
+    profile,
+    30,
+  );
+
+  assert.equal(dryResult.quantity, 2);
+  assert.match(dryResult.servingNote, /3\.6 kcal\/g/);
+  assert.match(dryResult.servingNote, /75%/);
+
+  assert.equal(mrVetPateResult.quantity, 18);
+  assert.match(mrVetPateResult.servingNote, /1\.1 kcal\/g/);
+
+  assert.equal(neekaMousseResult.quantity, 28);
+  assert.match(neekaMousseResult.servingNote, /0\.65 kcal\/g/);
+
+  assert.equal(neekaGravyResult.quantity, 36);
+  assert.match(neekaGravyResult.servingNote, /0\.5 kcal\/g/);
+
+  assert.equal(soupTreatResult.quantity, 39);
+  assert.match(soupTreatResult.servingNote, /10 kcal\/thanh/);
+  assert.match(soupTreatResult.servingNote, /5%/);
 });
 
 test('resolveRecommendationQuantity marks unknown packages for manual review', () => {
@@ -358,7 +426,7 @@ test('buildRecommendationForProfile reconciles AI product display fields to cata
   assert.equal(reconciledProduct.image, 'catalog.jpg');
   assert.equal(reconciledProduct.foodType, 'wet');
   assert.equal(reconciledProduct.reason, 'AI selected this item.');
-  assert.equal(reconciledProduct.quantity, 9);
+  assert.equal(reconciledProduct.quantity, 10);
   assert.equal(reconciledProduct.portionPercent, 10);
   assert.equal(reconciledProduct.daysCovered, 30);
   assert.equal(reconciledProduct.packageLabel, '80g');
@@ -489,6 +557,6 @@ test('buildRecommendationForProfile splits quantity share across products with t
   const dryProducts = recommendation.products.filter((product) => product.productRole === 'base');
   assert.equal(dryProducts.length, 2);
   assert.deepEqual(dryProducts.map((product) => product.portionPercent), [37.5, 37.5]);
-  assert.deepEqual(dryProducts.map((product) => product.quantity), [160, 160]);
+  assert.deepEqual(dryProducts.map((product) => product.quantity), [185, 185]);
   assert.equal(recommendation.products.find((product) => product.productRole === 'wet').portionPercent, 20);
 });

@@ -1,6 +1,14 @@
 ﻿const PetProfile = require('../models/PetProfile');
 const { buildRecommendationForProfile } = require('../services/meowRecommendation.service');
 
+const { consumeAiMixQuota } = require('../services/aiMixQuota.service');
+
+const defaultRecommendationDeps = {
+  buildRecommendationForProfile,
+  consumeAiMixQuota,
+};
+let recommendationDeps = { ...defaultRecommendationDeps };
+
 function buildImageUrl(req, file) {
   return `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
 }
@@ -88,11 +96,25 @@ async function recommendation(req, res) {
   if (!profile) return res.status(404).json({ message: 'Không tìm thấy hồ sơ thú cưng' });
 
   const durationDays = parseRecommendationDurationDays(req.body);
-  const aiSummary = await buildRecommendationForProfile(profile, { durationDays });
+  const quota = await recommendationDeps.consumeAiMixQuota(req, res, req.customer._id);
+  if (!quota.allowed) {
+    return res.status(429).json({
+      message: 'Thiết bị này đã dùng hết 3 lượt AI mix hôm nay. Sen quay lại vào ngày mai nha.',
+      limit: quota.limit,
+      remaining: quota.remaining,
+      resetAt: quota.resetAt?.toISOString?.() || quota.resetAt,
+    });
+  }
+
+  const aiSummary = await recommendationDeps.buildRecommendationForProfile(profile, { durationDays });
   profile.aiSummary = aiSummary;
   await profile.save();
 
   return res.json({ profile, recommendation: aiSummary });
+}
+
+function __setRecommendationDepsForTest(deps) {
+  recommendationDeps = deps ? { ...defaultRecommendationDeps, ...deps } : { ...defaultRecommendationDeps };
 }
 
 module.exports = {
@@ -101,6 +123,7 @@ module.exports = {
   buildImageUrl,
   normalizeProfilePayload,
   parseRecommendationDurationDays,
+  __setRecommendationDepsForTest,
   list,
   create,
   get,

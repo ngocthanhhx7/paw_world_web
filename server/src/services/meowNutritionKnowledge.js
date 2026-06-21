@@ -32,14 +32,26 @@ const CORE_GROUNDING_RULES = [
 
 function estimateDailyCalories(profile) {
   const weight = Math.max(Number(profile?.weightKg || 0), 1);
-  const rer = 70 * Math.pow(weight, 0.75);
-  const activityFactor = profile?.activityLevel === 'very_active' ? 1.3 : profile?.activityLevel === 'low' ? 0.95 : 1.1;
-  const goalFactor = profile?.weightGoal === 'gain' ? 1.12 : profile?.weightGoal === 'lose' ? 0.88 : 1;
-  const target = Math.max(120, Math.round(rer * activityFactor * goalFactor));
+  const totalMonths = (Number(profile?.ageYears || 0) * 12) + Number(profile?.ageMonths || 0);
+  const indoorOrWeightLoss = profile?.activityLevel === 'low' || profile?.weightGoal === 'lose';
+  const adultCoefficient = indoorOrWeightLoss ? 75 : 100;
+  let target = adultCoefficient * Math.pow(weight, 0.67);
+
+  if (totalMonths > 0 && totalMonths < 4) {
+    target *= 2.25;
+  } else if (totalMonths >= 4 && totalMonths < 9) {
+    target *= 1.875;
+  } else if (totalMonths >= 9 && totalMonths < 12) {
+    target *= 1.5;
+  } else if (profile?.weightGoal === 'gain') {
+    target *= 1.12;
+  }
+
+  target = Math.max(120, Math.round(target));
   return {
     min: Math.round(target * 0.9),
     max: Math.round(target * 1.1),
-    basis: 'NRC RER 70 x kg^0.75 adjusted by activity and weight goal',
+    basis: 'NRC/FEDIAF MER 100 x kg^0.67 adjusted by age, activity, and weight goal',
   };
 }
 

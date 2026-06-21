@@ -87,3 +87,12 @@ test('RecommendationPage renders Vietnamese combo summary and dynamic portion di
   assert.doesNotMatch(source, /complete-and-balanced/);
   assert.doesNotMatch(source, /100% Khô/);
 });
+
+test('RecommendationPage renders an API error state instead of a blank recommendation page', () => {
+  assert.match(source, /const \[errorMessage,\s*setErrorMessage\] = useState\(''\)/);
+  assert.match(source, /err\?\.response\?\.status === 429/);
+  assert.match(source, /setErrorMessage\(message\)/);
+  assert.match(source, /if \(!profile && errorMessage\)/);
+  assert.match(source, /Chọn lại thời lượng/);
+  assert.doesNotMatch(source, /if \(!profile\) return null;/);
+});

@@ -6,10 +6,11 @@ const {
   getNutritionGroundingForPrompt,
 } = require('./meowNutritionKnowledge');
 
-const KCAL_PER_GRAM_BY_FOOD_TYPE = {
+const DEFAULT_KCAL_PER_GRAM_BY_FOOD_TYPE = {
   dry: 3.6,
   wet: 1,
   mixed: 2.4,
+  supplement: 1,
 };
 
 const PRODUCT_ROLE_PRIORITY = {
@@ -40,6 +41,7 @@ const TREAT_ROLE_TERMS = [
 ];
 
 const WET_ROLE_TERMS = ['pate', 'sot', 'gravy', 'mousse', 'sup', 'soup', 'lon', 'wet'];
+const SOUP_TREAT_TERMS = ['sup thuong', 'soup thuong', 'thanh sup', 'tuyp', 'tube', 'churu'];
 
 const HEALTH_TERM_MAP = {
   digestion: ['digestion', 'tieu hoa', 'duong ruot', 'tieu chay', 'bao ve tieu hoa'],
@@ -183,6 +185,38 @@ function buildPackageLabel(count, amount, unit) {
   return `${trimNumber(amount)}${unit}`;
 }
 
+function inferProductEnergy(product = {}, productRole = classifyProductRole(product), packageInfo = null) {
+  const text = productSearchText(product);
+  const isSoupTreat = productRole === 'treat' && SOUP_TREAT_TERMS.some((term) => text.includes(term));
+  if (isSoupTreat) {
+    const unitCount = Math.max(1, Number(packageInfo?.unitCount) || 1);
+    return {
+      kind: 'unit',
+      caloriesPerPackage: unitCount * 10,
+      energyBasis: '10 kcal/thanh',
+    };
+  }
+
+  if (productRole === 'base' || product.foodType === 'dry') {
+    return { kind: 'gram', kcalPerGram: 3.6, energyBasis: '3.6 kcal/g' };
+  }
+
+  if (text.includes('mousse')) {
+    return { kind: 'gram', kcalPerGram: 0.65, energyBasis: '0.65 kcal/g' };
+  }
+
+  if (text.includes('gravy')) {
+    return { kind: 'gram', kcalPerGram: 0.5, energyBasis: '0.5 kcal/g' };
+  }
+
+  if ((text.includes('mr vet') || text.includes('mr. vet')) && (text.includes('pate') || productRole === 'wet')) {
+    return { kind: 'gram', kcalPerGram: 1.1, energyBasis: '1.1 kcal/g' };
+  }
+
+  const fallbackKcalPerGram = DEFAULT_KCAL_PER_GRAM_BY_FOOD_TYPE[product.foodType] || DEFAULT_KCAL_PER_GRAM_BY_FOOD_TYPE.mixed;
+  return { kind: 'gram', kcalPerGram: fallbackKcalPerGram, energyBasis: `${trimNumber(fallbackKcalPerGram)} kcal/g` };
+}
+
 function parsePackageQuantity(product = {}) {
   const sourceText = String(product.weight || product.name || '').trim();
   if (!sourceText) return null;
@@ -215,6 +249,8 @@ function parsePackageQuantity(product = {}) {
         packageLabel: buildPackageLabel(count, amount, unit),
         basis: 'weight_grams',
         amountGrams: Math.round(count * gramsFromUnit(amount, unit)),
+        unitCount: count,
+        unitGrams: Math.round(gramsFromUnit(amount, unit)),
         daysPerUnit: null,
       };
     }
@@ -266,14 +302,18 @@ function resolveRecommendationQuantity(product = {}, profile = {}, durationDays 
       portionLabel: portion.label,
       roleLabel: portion.roleLabel,
       portionKcalPerDay,
+      energyBasis: '',
       servingNote: `Tính theo gói ${packageInfo.packageLabel} cho combo ${requestedDays} ngày.`,
     };
   }
 
   if (packageInfo?.basis === 'weight_grams') {
     const effectivePortionKcalPerDay = Math.max(1, portionKcalPerDay);
-    const kcalPerGram = KCAL_PER_GRAM_BY_FOOD_TYPE[product.foodType] || KCAL_PER_GRAM_BY_FOOD_TYPE.mixed;
-    const caloriesPerPackage = Math.max(1, packageInfo.amountGrams * kcalPerGram);
+    const energy = inferProductEnergy(product, productRole, packageInfo);
+    const caloriesPerPackage = Math.max(
+      1,
+      energy.kind === 'unit' ? energy.caloriesPerPackage : packageInfo.amountGrams * energy.kcalPerGram,
+    );
     const quantity = Math.max(1, Math.ceil((effectivePortionKcalPerDay * requestedDays) / caloriesPerPackage));
     return {
       quantity,
@@ -284,7 +324,8 @@ function resolveRecommendationQuantity(product = {}, profile = {}, durationDays 
       portionLabel: portion.label,
       roleLabel: portion.roleLabel,
       portionKcalPerDay,
-      servingNote: `Tính theo ${packageInfo.packageLabel}, ${portion.label} chiếm ${trimNumber(portionPercent)}% khẩu phần, ước tính ${trimNumber(kcalPerGram)} kcal/g cho ${requestedDays} ngày.`,
+      energyBasis: energy.energyBasis,
+      servingNote: `Tính theo ${packageInfo.packageLabel}, ${portion.label} chiếm ${trimNumber(portionPercent)}% khẩu phần, ước tính ${energy.energyBasis} cho ${requestedDays} ngày.`,
     };
   }
 
@@ -297,6 +338,7 @@ function resolveRecommendationQuantity(product = {}, profile = {}, durationDays 
     portionLabel: portion.label,
     roleLabel: portion.roleLabel,
     portionKcalPerDay,
+    energyBasis: '',
     servingNote: 'Cần kiểm tra thủ công vì sản phẩm chưa có định lượng rõ ràng.',
   };
 }
@@ -421,7 +463,7 @@ function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS,
 }
 
 function buildRecommendationPrompt(profile, products, durationDays = 7) {
-  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only for durationDays=${durationDays}. Mix AI-only combo products with normal catalog products when both are relevant. Prefer a balanced cat meal kit: base dry/kibble food first, wet hydration food second, and treat/topping only as an optional add-on under 10% of daily calories. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones.\n${getNutritionGroundingForPrompt()}\nJSON fields required: summary, durationDays, dailyCalories {min,max,basis}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType/productRole/quantity/daysCovered/packageLabel/quantityBasis/estimatedDaysCovered/servingNote. Quantity and productRole are validated by the server from catalog data, so select products from catalog and explain reasons only.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
+  return `Return only valid JSON for PawWorld Meow Quizz recommendation. Do not include markdown. Write all user-facing values in Vietnamese. Create a personalized meal kit combo from the provided catalog only for durationDays=${durationDays}. Mix AI-only combo products with normal catalog products when both are relevant. Prefer the PawWorld mix matrix when catalog allows it: base dry/kibble food first for 75% kcal/day, pate or wet hydration food second for 20% kcal/day, and Neeka-style soup treat/topping only as a 5% kcal/day add-on. Avoid allergens, do not claim to treat disease, and do not recommend raw food or bones.\n${getNutritionGroundingForPrompt()}\nJSON fields required: summary, durationDays, dailyCalories {min,max,basis}, feedingPlan array, warnings array, products array with productId/fallbackId/name/reason/price/image/foodType/productRole/quantity/daysCovered/packageLabel/quantityBasis/estimatedDaysCovered/servingNote. Quantity and productRole are validated by the server from catalog data, so select products from catalog and explain reasons only.\nProfile: ${JSON.stringify(profile)}\nCatalog: ${JSON.stringify(products)}`;
 }
 
 function extractJson(text) {
@@ -461,6 +503,7 @@ function enrichRecommendationProducts(products = [], durationDays = 7) {
     portionLabel: product.portionLabel || PORTION_BY_PRODUCT_ROLE[product.productRole || classifyProductRole(product)]?.label || 'Sản phẩm bổ trợ',
     roleLabel: product.roleLabel || PORTION_BY_PRODUCT_ROLE[product.productRole || classifyProductRole(product)]?.roleLabel || 'Sản phẩm bổ trợ',
     portionKcalPerDay: product.portionKcalPerDay || null,
+    energyBasis: product.energyBasis || '',
     servingNote: product.servingNote || 'Cần kiểm tra thủ công vì sản phẩm chưa có định lượng rõ ràng.',
   }));
 }
@@ -496,6 +539,7 @@ function applySharedPortionQuantities(products = [], profile = {}, durationDays 
       portionLabel: quantityMeta.portionLabel,
       roleLabel: quantityMeta.roleLabel,
       portionKcalPerDay: quantityMeta.portionKcalPerDay,
+      energyBasis: quantityMeta.energyBasis || product.energyBasis || '',
       servingNote: quantityMeta.servingNote,
     };
   });
@@ -525,6 +569,7 @@ function toRecommendationProduct(catalogProduct, selectedProduct = {}, durationD
     portionLabel: quantityMeta.portionLabel,
     roleLabel: quantityMeta.roleLabel,
     portionKcalPerDay: quantityMeta.portionKcalPerDay,
+    energyBasis: quantityMeta.energyBasis || '',
     servingNote: quantityMeta.servingNote,
   };
 }

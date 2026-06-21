@@ -205,20 +205,29 @@ export default function RecommendationPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (!selectedDurationDays) return;
     let active = true;
     setLoading(true);
+    setErrorMessage('');
     petProfileApi.recommend(profileId, { durationDays: selectedDurationDays })
       .then((response) => {
         if (active) {
           setData(response);
           setActiveProductIndex(0);
+          setErrorMessage('');
         }
       })
       .catch((err) => {
-        if (active) toast.error(err?.response?.data?.message || 'Chưa tạo được gợi ý AI');
+        if (active) {
+          const message = err?.response?.status === 429
+            ? err?.response?.data?.message || 'Thiết bị này đã dùng hết lượt AI mix hôm nay.'
+            : err?.response?.data?.message || 'Chưa tạo được gợi ý AI';
+          setErrorMessage(message);
+          toast.error(message);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -364,7 +373,41 @@ export default function RecommendationPage() {
     );
   }
 
-  if (!profile) return null;
+  if (!profile && errorMessage) {
+    return (
+      <section className="grid min-h-[calc(100vh-80px)] place-items-center bg-[#fffefa] px-4 py-12 text-[#33303c]">
+        <div className="w-full max-w-[640px] rounded-[28px] bg-white px-8 py-10 text-center shadow-[0_15px_28px_rgba(39,34,46,0.12)]">
+          <h1 className="crayon text-[42px] leading-none text-[#2f1464]">Chưa tạo được thực đơn</h1>
+          <p className="mx-auto mt-5 max-w-[480px] text-base font-semibold leading-7 text-[#716878]">{errorMessage}</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDurationDays(null);
+                setErrorMessage('');
+              }}
+              className="h-12 rounded-full bg-[#ffca2d] px-7 font-extrabold text-[#6a4a00]"
+            >
+              Chọn lại thời lượng
+            </button>
+            <Link to="/meow-quizz/ho-so" className="inline-flex h-12 items-center rounded-full px-7 font-extrabold text-[#6b43ee]">
+              Quay lại hồ sơ
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <section className="grid min-h-[calc(100vh-80px)] place-items-center bg-[#fffefa] px-4">
+        <div className="rounded-[24px] bg-white p-10 text-center shadow-lg">
+          <h1 className="crayon text-[42px]">Đang chuẩn bị thực đơn...</h1>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[#fffefa] text-[#33303c]">
