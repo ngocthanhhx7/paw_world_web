@@ -48,3 +48,10 @@ test('LoginPage Facebook button uses Facebook SDK instead of development toast',
   assert.match(loginSource, /facebookLogin\(response\.authResponse\.accessToken\)/);
   assert.doesNotMatch(loginSource, /Facebook[^]*onClick=\{socialToast\}/);
 });
+
+test('LoginPage Facebook login clears loading when the SDK callback never returns', () => {
+  assert.match(loginSource, /FACEBOOK_LOGIN_TIMEOUT_MS/);
+  assert.match(loginSource, /setTimeout\(\(\)\s*=>\s*\{/);
+  assert.match(loginSource, /setFacebookLoading\(false\)/);
+  assert.match(loginSource, /clearTimeout\(timeoutId\)/);
+});

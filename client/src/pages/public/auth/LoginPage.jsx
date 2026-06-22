@@ -8,6 +8,7 @@ import { useCustomerAuthStore } from '@/store/customerAuthStore';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
+const FACEBOOK_LOGIN_TIMEOUT_MS = 20000;
 let googleScriptPromise;
 let facebookScriptPromise;
 
@@ -237,26 +238,43 @@ export function SocialButtons({ onGoogleSuccess }) {
     }
 
     setFacebookLoading(true);
-    window.FB.login(
-      async (response) => {
-        if (!response?.authResponse?.accessToken) {
-          setFacebookLoading(false);
-          toast.error('Dang nhap Facebook khong hop le');
-          return;
-        }
+    let callbackReturned = false;
+    const timeoutId = setTimeout(() => {
+      if (callbackReturned) return;
+      setFacebookLoading(false);
+      toast.error('Facebook Login chua phan hoi. Kiem tra JavaScript SDK va mien duoc phep trong Meta.');
+    }, FACEBOOK_LOGIN_TIMEOUT_MS);
 
-        try {
-          await facebookLogin(response.authResponse.accessToken);
-          toast.success('Đăng nhập thành công');
-          onGoogleSuccessRef.current?.();
-        } catch (err) {
-          toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
-        } finally {
-          setFacebookLoading(false);
-        }
-      },
-      { scope: 'public_profile,email' },
-    );
+    try {
+      window.FB.login(
+        async (response) => {
+          callbackReturned = true;
+          clearTimeout(timeoutId);
+
+          if (!response?.authResponse?.accessToken) {
+            setFacebookLoading(false);
+            toast.error('Dang nhap Facebook khong hop le');
+            return;
+          }
+
+          try {
+            await facebookLogin(response.authResponse.accessToken);
+            toast.success('Đăng nhập thành công');
+            onGoogleSuccessRef.current?.();
+          } catch (err) {
+            toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
+          } finally {
+            setFacebookLoading(false);
+          }
+        },
+        { scope: 'public_profile,email' },
+      );
+    } catch {
+      callbackReturned = true;
+      clearTimeout(timeoutId);
+      setFacebookLoading(false);
+      toast.error('Khong mo duoc Facebook Login');
+    }
   };
 
   return (
