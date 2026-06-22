@@ -30,6 +30,12 @@ export const useCustomerAuthStore = create((set) => ({
     return data.customer;
   },
 
+  facebookLogin: async (accessToken) => {
+    const data = await customerAuthApi.facebookLogin({ accessToken });
+    set({ customer: data.customer || null });
+    return data.customer;
+  },
+
   register: async (payload) => {
     const data = await customerAuthApi.register(payload);
     set({ customer: data.customer || null });

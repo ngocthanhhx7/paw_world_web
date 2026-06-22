@@ -26,3 +26,25 @@ test('LoginPage Google button uses Google Identity Services instead of developme
   assert.match(loginSource, /googleLogin\(response\.credential\)/);
   assert.doesNotMatch(loginSource, /Tiếp tục với Google[^]*onClick=\{socialToast\}/);
 });
+test('customer auth endpoints expose Facebook login API', () => {
+  assert.match(
+    endpointsSource,
+    /facebookLogin:\s*\(payload\)\s*=>\s*api\.post\('\/auth\/customer\/facebook',\s*payload\)/,
+  );
+});
+
+test('customer auth store logs in with Facebook access token and stores returned customer', () => {
+  assert.match(storeSource, /facebookLogin:\s*async\s*\(accessToken\)\s*=>/);
+  assert.match(storeSource, /customerAuthApi\.facebookLogin\(\{\s*accessToken\s*\}\)/);
+  assert.match(storeSource, /set\(\{\s*customer:\s*data\.customer\s*\|\|\s*null\s*\}\)/);
+});
+
+test('LoginPage Facebook button uses Facebook SDK instead of development toast', () => {
+  assert.match(loginSource, /VITE_FACEBOOK_APP_ID/);
+  assert.match(loginSource, /connect\.facebook\.net\/vi_VN\/sdk\.js/);
+  assert.match(loginSource, /FB\.init/);
+  assert.match(loginSource, /FB\.login/);
+  assert.match(loginSource, /scope:\s*'public_profile,email'/);
+  assert.match(loginSource, /facebookLogin\(response\.authResponse\.accessToken\)/);
+  assert.doesNotMatch(loginSource, /Facebook[^]*onClick=\{socialToast\}/);
+});

@@ -286,6 +286,291 @@ test('customerGoogleLogin links and logs in an existing customer without changin
   assert.equal(res.body.customer.id, 'existing-customer-1');
 });
 
+test('customerFacebookLogin rejects missing access token', async () => {
+  const req = { body: {} };
+  const res = createMockRes();
+
+  await authController.customerFacebookLogin(req, res);
+
+  assert.equal(res.statusCode, 400);
+  assert.deepEqual(res.body, { message: 'Thieu thong tin dang nhap Facebook' });
+});
+
+test('customerFacebookLogin reports missing Facebook config', async () => {
+  const req = { body: { accessToken: 'facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+
+  delete process.env.FACEBOOK_APP_ID;
+  delete process.env.FACEBOOK_APP_SECRET;
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+  }
+
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(res.body, { message: 'Dang nhap Facebook chua duoc cau hinh' });
+});
+
+test('customerFacebookLogin rejects invalid Facebook access token', async () => {
+  const req = { body: { accessToken: 'bad-facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+
+  process.env.FACEBOOK_APP_ID = 'facebook-app-id';
+  process.env.FACEBOOK_APP_SECRET = 'facebook-app-secret';
+  authController.__setFacebookVerifierForTest(async () => ({
+    isValid: false,
+    appId: 'facebook-app-id',
+    userId: 'facebook-user-1',
+  }));
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+    authController.__setFacebookVerifierForTest(null);
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Dang nhap Facebook khong hop le' });
+});
+
+test('customerFacebookLogin rejects Facebook token from another app', async () => {
+  const req = { body: { accessToken: 'facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+
+  process.env.FACEBOOK_APP_ID = 'facebook-app-id';
+  process.env.FACEBOOK_APP_SECRET = 'facebook-app-secret';
+  authController.__setFacebookVerifierForTest(async () => ({
+    isValid: true,
+    appId: 'another-app-id',
+    userId: 'facebook-user-1',
+  }));
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+    authController.__setFacebookVerifierForTest(null);
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Dang nhap Facebook khong hop le' });
+});
+
+test('customerFacebookLogin rejects Facebook profile without email', async () => {
+  const req = { body: { accessToken: 'facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+
+  process.env.FACEBOOK_APP_ID = 'facebook-app-id';
+  process.env.FACEBOOK_APP_SECRET = 'facebook-app-secret';
+  authController.__setFacebookVerifierForTest(async () => ({
+    isValid: true,
+    appId: 'facebook-app-id',
+    userId: 'facebook-user-1',
+  }));
+  authController.__setFacebookProfileFetcherForTest(async () => ({
+    id: 'facebook-user-1',
+    name: 'Sen Facebook',
+  }));
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+    authController.__setFacebookVerifierForTest(null);
+    authController.__setFacebookProfileFetcherForTest(null);
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Tai khoan Facebook chua cung cap email' });
+});
+
+test('customerFacebookLogin creates a customer for a valid Facebook profile', async () => {
+  const req = { body: { accessToken: 'facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+  const originalFindOne = Customer.findOne;
+  const originalCreate = Customer.create;
+
+  process.env.FACEBOOK_APP_ID = 'facebook-app-id';
+  process.env.FACEBOOK_APP_SECRET = 'facebook-app-secret';
+  authController.__setFacebookVerifierForTest(async (accessToken, appId, appSecret) => {
+    assert.equal(accessToken, 'facebook-token');
+    assert.equal(appId, 'facebook-app-id');
+    assert.equal(appSecret, 'facebook-app-secret');
+    return {
+      isValid: true,
+      appId: 'facebook-app-id',
+      userId: 'facebook-user-1',
+    };
+  });
+  authController.__setFacebookProfileFetcherForTest(async (accessToken) => {
+    assert.equal(accessToken, 'facebook-token');
+    return {
+      id: 'facebook-user-1',
+      email: ' Sen.Facebook@Example.com ',
+      name: 'Sen Facebook',
+      picture: { data: { url: 'https://example.com/facebook-avatar.png' } },
+    };
+  });
+
+  Customer.findOne = async (query) => {
+    assert.deepEqual(query, { email: 'sen.facebook@example.com' });
+    return null;
+  };
+
+  Customer.create = async (payload) => {
+    assert.equal(payload.fullName, 'Sen Facebook');
+    assert.equal(payload.email, 'sen.facebook@example.com');
+    assert.equal(payload.facebookSub, 'facebook-user-1');
+    assert.equal(payload.avatar, 'https://example.com/facebook-avatar.png');
+    assert.ok(payload.emailVerifiedAt instanceof Date);
+    assert.ok(payload.lastLoginAt instanceof Date);
+    assert.equal(Object.hasOwn(payload, 'password'), false);
+    return { _id: 'customer-facebook-1', phone: '', tokenVersion: 0, ...payload };
+  };
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+    Customer.findOne = originalFindOne;
+    Customer.create = originalCreate;
+    authController.__setFacebookVerifierForTest(null);
+    authController.__setFacebookProfileFetcherForTest(null);
+  }
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.cookies[0].name, 'paw_customer_token');
+  assert.deepEqual(res.body.customer, {
+    id: 'customer-facebook-1',
+    fullName: 'Sen Facebook',
+    email: 'sen.facebook@example.com',
+    phone: '',
+    avatar: 'https://example.com/facebook-avatar.png',
+  });
+});
+
+test('customerFacebookLogin links and logs in an existing customer without changing password', async () => {
+  const req = { body: { accessToken: 'facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+  const originalFindOne = Customer.findOne;
+  const customer = {
+    _id: 'existing-facebook-customer-1',
+    fullName: 'Existing Facebook Sen',
+    email: 'sen@example.com',
+    password: 'hashed-password',
+    phone: '',
+    avatar: '',
+    isActive: true,
+    tokenVersion: 2,
+    facebookSub: '',
+    emailVerifiedAt: null,
+    lastLoginAt: null,
+    saveCalls: 0,
+    async save() {
+      this.saveCalls += 1;
+      return this;
+    },
+  };
+
+  process.env.FACEBOOK_APP_ID = 'facebook-app-id';
+  process.env.FACEBOOK_APP_SECRET = 'facebook-app-secret';
+  authController.__setFacebookVerifierForTest(async () => ({
+    isValid: true,
+    appId: 'facebook-app-id',
+    userId: 'facebook-user-1',
+  }));
+  authController.__setFacebookProfileFetcherForTest(async () => ({
+    id: 'facebook-user-1',
+    email: 'sen@example.com',
+    name: 'Sen Facebook',
+    picture: { data: { url: 'https://example.com/facebook-avatar.png' } },
+  }));
+
+  Customer.findOne = async (query) => {
+    assert.deepEqual(query, { email: 'sen@example.com' });
+    return customer;
+  };
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+    Customer.findOne = originalFindOne;
+    authController.__setFacebookVerifierForTest(null);
+    authController.__setFacebookProfileFetcherForTest(null);
+  }
+
+  assert.equal(customer.password, 'hashed-password');
+  assert.equal(customer.facebookSub, 'facebook-user-1');
+  assert.equal(customer.avatar, 'https://example.com/facebook-avatar.png');
+  assert.ok(customer.emailVerifiedAt instanceof Date);
+  assert.ok(customer.lastLoginAt instanceof Date);
+  assert.equal(customer.saveCalls, 1);
+  assert.equal(res.cookies[0].name, 'paw_customer_token');
+  assert.equal(res.body.customer.id, 'existing-facebook-customer-1');
+});
+
+test('customerFacebookLogin rejects locked existing customer', async () => {
+  const req = { body: { accessToken: 'facebook-token' } };
+  const res = createMockRes();
+  const originalAppId = process.env.FACEBOOK_APP_ID;
+  const originalAppSecret = process.env.FACEBOOK_APP_SECRET;
+  const originalFindOne = Customer.findOne;
+
+  process.env.FACEBOOK_APP_ID = 'facebook-app-id';
+  process.env.FACEBOOK_APP_SECRET = 'facebook-app-secret';
+  authController.__setFacebookVerifierForTest(async () => ({
+    isValid: true,
+    appId: 'facebook-app-id',
+    userId: 'facebook-user-1',
+  }));
+  authController.__setFacebookProfileFetcherForTest(async () => ({
+    id: 'facebook-user-1',
+    email: 'locked@example.com',
+    name: 'Locked Facebook',
+  }));
+
+  Customer.findOne = async () => ({
+    _id: 'locked-customer-1',
+    email: 'locked@example.com',
+    isActive: false,
+  });
+
+  try {
+    await authController.customerFacebookLogin(req, res);
+  } finally {
+    process.env.FACEBOOK_APP_ID = originalAppId;
+    process.env.FACEBOOK_APP_SECRET = originalAppSecret;
+    Customer.findOne = originalFindOne;
+    authController.__setFacebookVerifierForTest(null);
+    authController.__setFacebookProfileFetcherForTest(null);
+  }
+
+  assert.equal(res.statusCode, 401);
+  assert.deepEqual(res.body, { message: 'Tai khoan khong ton tai hoac da bi khoa' });
+});
+
 test('customerForgotPassword returns a generic response and exposes resetUrl outside production', async () => {
   const req = {
     body: {

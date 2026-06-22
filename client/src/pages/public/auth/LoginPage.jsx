@@ -6,9 +6,10 @@ import { Eye, EyeOff } from 'lucide-react';
 import AuthShell from './AuthShell';
 import { useCustomerAuthStore } from '@/store/customerAuthStore';
 
-const socialToast = () => toast('Tính năng đang phát triển');
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
 let googleScriptPromise;
+let facebookScriptPromise;
 
 function loadGoogleIdentityScript() {
   if (window.google?.accounts?.id) return Promise.resolve();
@@ -32,6 +33,31 @@ function loadGoogleIdentityScript() {
   });
 
   return googleScriptPromise;
+}
+
+function loadFacebookSdk() {
+  if (window.FB) return Promise.resolve();
+  if (facebookScriptPromise) return facebookScriptPromise;
+
+  facebookScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src="https://connect.facebook.net/vi_VN/sdk.js"]');
+    if (existing) {
+      existing.addEventListener('load', resolve, { once: true });
+      existing.addEventListener('error', reject, { once: true });
+      return;
+    }
+
+    window.fbAsyncInit = () => resolve();
+    const script = document.createElement('script');
+    script.src = 'https://connect.facebook.net/vi_VN/sdk.js';
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+
+  return facebookScriptPromise;
 }
 
 export default function LoginPage() {
@@ -115,8 +141,11 @@ export function SocialButtons({ onGoogleSuccess }) {
   const googleButtonRef = useRef(null);
   const onGoogleSuccessRef = useRef(onGoogleSuccess);
   const googleLogin = useCustomerAuthStore((s) => s.googleLogin);
+  const facebookLogin = useCustomerAuthStore((s) => s.facebookLogin);
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookReady, setFacebookReady] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
 
   useEffect(() => {
     onGoogleSuccessRef.current = onGoogleSuccess;
@@ -172,11 +201,69 @@ export function SocialButtons({ onGoogleSuccess }) {
     };
   }, [googleLogin]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!facebookAppId) return undefined;
+
+    loadFacebookSdk()
+      .then(() => {
+        if (cancelled || !window.FB) return;
+        window.FB.init({
+          appId: facebookAppId,
+          cookie: false,
+          xfbml: false,
+          version: 'v20.0',
+        });
+        setFacebookReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Khong tai duoc Facebook Login');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleFacebookLogin = () => {
+    if (!facebookAppId) {
+      toast.error('Facebook Login chua duoc cau hinh');
+      return;
+    }
+    if (!facebookReady || !window.FB) {
+      toast.error('Facebook Login chua san sang');
+      return;
+    }
+
+    setFacebookLoading(true);
+    window.FB.login(
+      async (response) => {
+        if (!response?.authResponse?.accessToken) {
+          setFacebookLoading(false);
+          toast.error('Dang nhap Facebook khong hop le');
+          return;
+        }
+
+        try {
+          await facebookLogin(response.authResponse.accessToken);
+          toast.success('Đăng nhập thành công');
+          onGoogleSuccessRef.current?.();
+        } catch (err) {
+          toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
+        } finally {
+          setFacebookLoading(false);
+        }
+      },
+      { scope: 'public_profile,email' },
+    );
+  };
+
   return (
     <div className="mt-6 space-y-3">
-      <button type="button" onClick={socialToast} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0]">
+      <button type="button" onClick={handleFacebookLogin} disabled={facebookLoading} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0] disabled:opacity-60">
         <img src="/assets/icon/khac/ic_baseline-facebook.svg" alt="" className="h-5 w-5" />
-        Tiếp tục với Facebook
+        {facebookLoading ? 'Đang xử lý...' : 'Tiếp tục với Facebook'}
       </button>
       <div className="min-h-12 w-full">
         {googleClientId ? (

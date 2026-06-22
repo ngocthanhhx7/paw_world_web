@@ -39,6 +39,7 @@ export const customerAuthApi = {
   register: (payload) => api.post('/auth/customer/register', payload).then((r) => r.data),
   login: (payload) => api.post('/auth/customer/login', payload).then((r) => r.data),
   googleLogin: (payload) => api.post('/auth/customer/google', payload).then((r) => r.data),
+  facebookLogin: (payload) => api.post('/auth/customer/facebook', payload).then((r) => r.data),
   me: () => api.get('/auth/customer/me').then((r) => r.data),
   logout: () => api.post('/auth/customer/logout').then((r) => r.data),
   forgotPassword: (payload) =>
