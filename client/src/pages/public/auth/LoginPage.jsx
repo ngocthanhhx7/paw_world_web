@@ -236,6 +236,10 @@ export function SocialButtons({ onGoogleSuccess }) {
       toast.error('Facebook Login chua san sang');
       return;
     }
+    if (typeof window.FB.login !== 'function') {
+      toast.error('Facebook Login chua san sang');
+      return;
+    }
 
     setFacebookLoading(true);
     let callbackReturned = false;
@@ -269,11 +273,13 @@ export function SocialButtons({ onGoogleSuccess }) {
         },
         { scope: 'public_profile,email' },
       );
-    } catch {
+    } catch (err) {
       callbackReturned = true;
       clearTimeout(timeoutId);
       setFacebookLoading(false);
-      toast.error('Khong mo duoc Facebook Login');
+      console.error('[facebook-login] FB.login failed:', err);
+      const detail = err?.message ? `: ${err.message}` : '';
+      toast.error(`Khong mo duoc Facebook Login${detail}. Kiem tra JavaScript SDK va mien duoc phep trong Meta.`);
     }
   };
 

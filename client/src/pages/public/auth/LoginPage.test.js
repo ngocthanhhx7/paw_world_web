@@ -55,3 +55,9 @@ test('LoginPage Facebook login clears loading when the SDK callback never return
   assert.match(loginSource, /setFacebookLoading\(false\)/);
   assert.match(loginSource, /clearTimeout\(timeoutId\)/);
 });
+
+test('LoginPage Facebook login reports SDK open failures with diagnostics', () => {
+  assert.match(loginSource, /typeof window\.FB\.login !== 'function'/);
+  assert.match(loginSource, /console\.error\('\[facebook-login\] FB\.login failed:', err\)/);
+  assert.match(loginSource, /Khong mo duoc Facebook Login.*Kiem tra JavaScript SDK va mien duoc phep/);
+});
