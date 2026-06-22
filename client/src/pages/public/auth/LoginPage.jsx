@@ -257,7 +257,7 @@ export function SocialButtons({ onGoogleSuccess }) {
 
           if (!response?.authResponse?.accessToken) {
             setFacebookLoading(false);
-            toast.error('Dang nhap Facebook khong hop le');
+            toast.error('Facebook khong tra ve token truy cap. Kiem tra quyen email trong Meta.');
             return;
           }
 

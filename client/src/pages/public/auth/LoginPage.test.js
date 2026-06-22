@@ -66,3 +66,8 @@ test('LoginPage Facebook login passes a plain callback to the SDK', () => {
   assert.doesNotMatch(loginSource, /window\.FB\.login\(\s*async\s*\(/);
   assert.match(loginSource, /\(async\s*\(\)\s*=>\s*\{/);
 });
+
+test('LoginPage Facebook login explains missing email permission when no token is returned', () => {
+  assert.match(loginSource, /Facebook khong tra ve token truy cap/);
+  assert.match(loginSource, /quyen email trong Meta/);
+});
