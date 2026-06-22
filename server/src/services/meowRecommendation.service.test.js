@@ -560,3 +560,73 @@ test('buildRecommendationForProfile splits quantity share across products with t
   assert.deepEqual(dryProducts.map((product) => product.quantity), [185, 185]);
   assert.equal(recommendation.products.find((product) => product.productRole === 'wet').portionPercent, 20);
 });
+
+test('buildRecommendationForProfile adds soup treat when AI returns dry and wet foods only', async () => {
+  const dryOneId = '65f000000000000000000301';
+  const dryTwoId = '65f000000000000000000302';
+  const wetId = '65f000000000000000000303';
+  const treatId = '65f000000000000000000304';
+  const ProductModel = {
+    find() {
+      return {
+        sort() {
+          return {
+            limit: async () => [
+              {
+                _id: dryOneId,
+                name: 'Hat kho G1 goi 1kg ca ngu',
+                price: 161000,
+                foodType: 'dry',
+                weight: '1kg',
+                tags: ['hat kho'],
+              },
+              {
+                _id: dryTwoId,
+                name: 'Hat kho T2 goi 1kg protein cao',
+                price: 161000,
+                foodType: 'dry',
+                weight: '1kg',
+                tags: ['hat kho'],
+              },
+              {
+                _id: wetId,
+                name: 'Pate Cho Meo Goi 70G Omega 3',
+                price: 21000,
+                foodType: 'wet',
+                weight: '70g',
+                tags: ['pate'],
+              },
+              {
+                _id: treatId,
+                name: 'Thanh sup Thuong Neeka vi Ca ngu 12g',
+                price: 2100,
+                foodType: 'wet',
+                weight: '12g',
+                tags: ['snack', 'thanh sup'],
+              },
+            ],
+          };
+        },
+      };
+    },
+  };
+
+  const recommendation = await buildRecommendationForProfile(profile, {
+    ProductModel,
+    streamChatCompletion: async ({ onToken }) => {
+      onToken(JSON.stringify({
+        summary: 'AI summary',
+        products: [
+          { productId: dryOneId, name: 'Hat kho G1 goi 1kg ca ngu' },
+          { productId: dryTwoId, name: 'Hat kho T2 goi 1kg protein cao' },
+          { productId: wetId, name: 'Pate Cho Meo Goi 70G Omega 3' },
+        ],
+      }));
+    },
+    durationDays: 7,
+  });
+
+  assert.deepEqual(recommendation.products.map((product) => product.productId), [dryOneId, wetId, treatId]);
+  assert.deepEqual(recommendation.products.map((product) => product.productRole), ['base', 'wet', 'treat']);
+  assert.deepEqual(recommendation.products.map((product) => product.portionPercent), [75, 20, 5]);
+});

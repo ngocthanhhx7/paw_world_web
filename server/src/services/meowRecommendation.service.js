@@ -416,6 +416,7 @@ function selectBalancedCatalogProducts(products = [], desiredCount = 3, profile 
 
   addProduct(bestByRole('base'));
   addProduct(bestByRole('wet'));
+  addProduct(bestByRole('treat'));
 
   const remaining = sortProductsForProfile(
     enriched.filter((product) => !seen.has(`${product.source || 'db'}:${product.id}`)),
@@ -631,6 +632,7 @@ function ensureBalancedRecommendationProducts(reconciledProducts = [], catalog =
 
   addRole('base');
   addRole('wet');
+  addRole('treat');
   reconciledProducts.forEach(addRecommendationProduct);
   balancedCatalog.forEach((product) => {
     addRecommendationProduct(toRecommendationProduct(product, {}, durationDays, selected.length, profile));
