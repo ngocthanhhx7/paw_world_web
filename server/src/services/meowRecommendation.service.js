@@ -42,6 +42,7 @@ const TREAT_ROLE_TERMS = [
 
 const WET_ROLE_TERMS = ['pate', 'sot', 'gravy', 'mousse', 'sup', 'soup', 'lon', 'wet'];
 const SOUP_TREAT_TERMS = ['sup thuong', 'soup thuong', 'thanh sup', 'tuyp', 'tube', 'churu'];
+const TREAT_CATALOG_SEARCH_RE = /snack|treat|thuong|thưởng|sup|súp|soup|tuyp|tube|thanh/i;
 
 const HEALTH_TERM_MAP = {
   digestion: ['digestion', 'tieu hoa', 'duong ruot', 'tieu chay', 'bao ve tieu hoa'],
@@ -439,6 +440,22 @@ function mergeCatalogProducts(dbProducts, minimum = 3, profile = {}) {
   return selectBalancedCatalogProducts(catalog, desiredCount, profile);
 }
 
+function hasTreatCatalogProduct(products = []) {
+  return products
+    .map(normalizeProduct)
+    .some((product) => classifyProductRole(product) === 'treat');
+}
+
+function mergeUniqueCatalogDocuments(products = []) {
+  const seen = new Set();
+  return products.filter((product) => {
+    const key = String(product?._id || product?.id || product?.name || '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function buildDeterministicRecommendation(profile, products = FALLBACK_PRODUCTS, source = 'fallback', durationDays = 7) {
   const dailyCalories = estimateDailyCalories(profile);
 
@@ -485,7 +502,35 @@ async function fetchCatalogProducts(ProductModel = Product, profile = {}) {
         .limit(24),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Product catalog timeout')), 3000)),
     ]);
-    return mergeCatalogProducts(products, 3, profile);
+    let catalogProducts = products;
+    if (!hasTreatCatalogProduct(catalogProducts)) {
+      try {
+        const treatProducts = await Promise.race([
+          ProductModel.find({
+            isActive: true,
+            foodType: { $in: ['wet', 'mixed'] },
+            $and: [
+              { $or: [{ isAiComboOnly: true }, { isAiComboOnly: { $ne: true } }] },
+              {
+                $or: [
+                  { name: TREAT_CATALOG_SEARCH_RE },
+                  { tags: TREAT_CATALOG_SEARCH_RE },
+                  { shortDescription: TREAT_CATALOG_SEARCH_RE },
+                  { description: TREAT_CATALOG_SEARCH_RE },
+                ],
+              },
+            ],
+          })
+            .sort({ isBestSeller: -1, soldCount: -1, createdAt: -1 })
+            .limit(12),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Treat catalog timeout')), 1500)),
+        ]);
+        catalogProducts = mergeUniqueCatalogDocuments([...catalogProducts, ...treatProducts]);
+      } catch {
+        catalogProducts = products;
+      }
+    }
+    return mergeCatalogProducts(catalogProducts, 3, profile);
   } catch {
     return FALLBACK_PRODUCTS;
   }

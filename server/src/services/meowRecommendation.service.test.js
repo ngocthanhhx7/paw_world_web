@@ -297,10 +297,10 @@ test('mergeCatalogProducts excludes products matching profile allergens best eff
 });
 
 test('buildRecommendationForProfile requests AI-only and public active food products', async () => {
-  let query;
+  const queries = [];
   const ProductModel = {
     find(input) {
-      query = input;
+      queries.push(input);
       return {
         sort() {
           return {
@@ -318,6 +318,7 @@ test('buildRecommendationForProfile requests AI-only and public active food prod
     },
   });
 
+  const query = queries[0];
   assert.equal(query.isActive, true);
   assert.deepEqual(query.foodType, { $in: ['dry', 'wet', 'mixed'] });
   assert.deepEqual(query.$or, [{ isAiComboOnly: true }, { isAiComboOnly: { $ne: true } }]);
@@ -627,6 +628,85 @@ test('buildRecommendationForProfile adds soup treat when AI returns dry and wet 
   });
 
   assert.deepEqual(recommendation.products.map((product) => product.productId), [dryOneId, wetId, treatId]);
+  assert.deepEqual(recommendation.products.map((product) => product.productRole), ['base', 'wet', 'treat']);
+  assert.deepEqual(recommendation.products.map((product) => product.portionPercent), [75, 20, 5]);
+});
+
+test('buildRecommendationForProfile includes soup treat from a supplemental catalog lookup', async () => {
+  const dryId = '65f000000000000000000401';
+  const wetId = '65f000000000000000000402';
+  const supportWetId = '65f000000000000000000403';
+  const treatId = '65f000000000000000000404';
+  const queries = [];
+  const ProductModel = {
+    find(input) {
+      queries.push(input);
+      const callIndex = queries.length;
+      return {
+        sort() {
+          return {
+            limit: async () => (
+              callIndex === 1
+                ? [
+                  {
+                    _id: dryId,
+                    name: 'Hat kho G1 goi 1kg ca ngu',
+                    price: 161000,
+                    foodType: 'dry',
+                    weight: '1kg',
+                    tags: ['hat kho'],
+                  },
+                  {
+                    _id: wetId,
+                    name: '[Dang Mouse] Pate Dinh Duong Vi bo Lon 85g',
+                    price: 11200,
+                    foodType: 'wet',
+                    weight: '85g',
+                    tags: ['pate'],
+                  },
+                  {
+                    _id: supportWetId,
+                    name: 'Pate goi dinh duong 70G ho tro xuong khop',
+                    price: 21000,
+                    foodType: 'wet',
+                    weight: '70g',
+                    tags: ['pate'],
+                  },
+                ]
+                : [
+                  {
+                    _id: treatId,
+                    name: 'Thanh sup Thuong Neeka vi Ga tuoi 12g',
+                    price: 2100,
+                    foodType: 'wet',
+                    weight: '12g',
+                    tags: ['snack', 'thanh sup'],
+                  },
+                ]
+            ),
+          };
+        },
+      };
+    },
+  };
+
+  const recommendation = await buildRecommendationForProfile(profile, {
+    ProductModel,
+    streamChatCompletion: async ({ onToken }) => {
+      onToken(JSON.stringify({
+        summary: 'AI summary',
+        products: [
+          { productId: dryId, name: 'Hat kho G1 goi 1kg ca ngu' },
+          { productId: wetId, name: '[Dang Mouse] Pate Dinh Duong Vi bo Lon 85g' },
+          { productId: supportWetId, name: 'Pate goi dinh duong 70G ho tro xuong khop' },
+        ],
+      }));
+    },
+    durationDays: 30,
+  });
+
+  assert.equal(queries.length, 2);
+  assert.deepEqual(recommendation.products.map((product) => product.productId), [dryId, wetId, treatId]);
   assert.deepEqual(recommendation.products.map((product) => product.productRole), ['base', 'wet', 'treat']);
   assert.deepEqual(recommendation.products.map((product) => product.portionPercent), [75, 20, 5]);
 });
