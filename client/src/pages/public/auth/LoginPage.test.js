@@ -61,3 +61,8 @@ test('LoginPage Facebook login reports SDK open failures with diagnostics', () =
   assert.match(loginSource, /console\.error\('\[facebook-login\] FB\.login failed:', err\)/);
   assert.match(loginSource, /Khong mo duoc Facebook Login.*Kiem tra JavaScript SDK va mien duoc phep/);
 });
+
+test('LoginPage Facebook login passes a plain callback to the SDK', () => {
+  assert.doesNotMatch(loginSource, /window\.FB\.login\(\s*async\s*\(/);
+  assert.match(loginSource, /\(async\s*\(\)\s*=>\s*\{/);
+});

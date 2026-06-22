@@ -251,7 +251,7 @@ export function SocialButtons({ onGoogleSuccess }) {
 
     try {
       window.FB.login(
-        async (response) => {
+        (response) => {
           callbackReturned = true;
           clearTimeout(timeoutId);
 
@@ -261,15 +261,17 @@ export function SocialButtons({ onGoogleSuccess }) {
             return;
           }
 
-          try {
-            await facebookLogin(response.authResponse.accessToken);
+          (async () => {
+            try {
+              await facebookLogin(response.authResponse.accessToken);
             toast.success('Đăng nhập thành công');
             onGoogleSuccessRef.current?.();
           } catch (err) {
             toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
-          } finally {
-            setFacebookLoading(false);
-          }
+            } finally {
+              setFacebookLoading(false);
+            }
+          })();
         },
         { scope: 'public_profile,email' },
       );
