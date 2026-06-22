@@ -264,10 +264,10 @@ export function SocialButtons({ onGoogleSuccess }) {
           (async () => {
             try {
               await facebookLogin(response.authResponse.accessToken);
-            toast.success('Đăng nhập thành công');
-            onGoogleSuccessRef.current?.();
-          } catch (err) {
-            toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
+              toast.success('Đăng nhập thành công');
+              onGoogleSuccessRef.current?.();
+            } catch (err) {
+              toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
             } finally {
               setFacebookLoading(false);
             }
