@@ -16,7 +16,7 @@ const customerSchema = new mongoose.Schema(
     password: {
       type: String,
       required() {
-        return !this.googleSub && !this.facebookSub;
+        return !this.googleSub;
       },
       minlength: 6,
       select: false,
@@ -24,7 +24,6 @@ const customerSchema = new mongoose.Schema(
     phone: { type: String, default: '', trim: true },
     avatar: { type: String, default: '' },
     googleSub: { type: String, default: '', trim: true, index: true },
-    facebookSub: { type: String, default: '', trim: true, index: true },
     isActive: { type: Boolean, default: true },
     tokenVersion: { type: Number, default: 0 },
     emailVerifiedAt: { type: Date, default: null },

@@ -122,13 +122,13 @@ function PainCard({ pain }) {
 
   return (
     <div
-      className={`min-w-0 rounded-[20px] border-[1.5px] px-5 py-6 md:px-7 md:py-7 ${pain.border} ${pain.bg}`}
+      className={`min-w-0 rounded-[22px] border-[1.5px] px-6 py-7 md:px-8 md:py-8 ${pain.border} ${pain.bg}`}
     >
       <Icon className={`h-6 w-6 ${pain.iconColor}`} strokeWidth={2.2} />
-      <h3 className="mt-3 text-[18px] font-extrabold leading-tight tracking-normal text-[#252020]">
+      <h3 className="mt-4 text-[20px] font-extrabold leading-tight tracking-normal text-[#252020] md:text-[22px]">
         {pain.title}
       </h3>
-      <p className="mt-2 text-[14px] leading-[1.55] text-[#5C4033]">{pain.desc}</p>
+      <p className="mt-3 text-[15px] leading-[1.65] text-[#5C4033] md:text-[16px]">{pain.desc}</p>
     </div>
   );
 }
@@ -359,7 +359,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-[1fr_320px_1fr] md:items-stretch md:gap-8">
+          <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-[1fr_340px_1fr] md:items-stretch md:gap-8">
             {/* Left column */}
             <div className="order-2 grid min-w-0 gap-5 content-start md:order-1 md:gap-6">
               <PainCard pain={PAINS[0]} />
@@ -404,7 +404,7 @@ export default function HomePage() {
           <div className="relative mx-auto max-w-[1000px] px-2 md:px-6">
             {/* dotted line */}
             <div
-              className="hidden md:block absolute left-[12%] right-[12%] top-[44px] h-0.5 border-t-2 border-dashed border-[#9C9587]"
+              className="hidden md:block absolute left-[16.666%] right-[16.666%] top-[44px] h-0.5 border-t-2 border-dashed border-[#9C9587]"
               aria-hidden
             />
 
@@ -486,7 +486,7 @@ export default function HomePage() {
               </h2>
               <p className="mt-5 max-w-[520px] text-[14px] leading-7 text-[#5C4033] md:text-[15px]">
                 Tại PawWorld, chúng tôi tin rằng mọi bé mèo đều xứng đáng có một
-                bữa ăn ngon. Đó là lý do <strong>[X]%</strong> doanh thu từ mỗi
+                bữa ăn ngon. Đó là lý do <strong>5%</strong> doanh thu từ mỗi
                 đơn hàng sẽ được trích ra để hỗ trợ thực phẩm cho các trạm cứu hộ
                 mèo lang thang.
               </p>

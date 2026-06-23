@@ -7,8 +7,6 @@ const { sendMail } = require('../config/mail');
 
 const googleOAuthClient = new OAuth2Client();
 let googleVerifierForTest = null;
-let facebookVerifierForTest = null;
-let facebookProfileFetcherForTest = null;
 
 function signToken(admin) {
   return jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, {
@@ -63,48 +61,6 @@ function normalizeGoogleEmail(email) {
 
 function fallbackGoogleName(email) {
   return normalizeGoogleEmail(email).split('@')[0] || 'PawWorld User';
-}
-
-function facebookAvatarUrl(profile = {}) {
-  return profile.picture?.data?.url || '';
-}
-
-async function verifyFacebookAccessToken(accessToken, appId, appSecret) {
-  if (facebookVerifierForTest) {
-    return facebookVerifierForTest(accessToken, appId, appSecret);
-  }
-
-  const url = new URL('https://graph.facebook.com/debug_token');
-  url.searchParams.set('input_token', accessToken);
-  url.searchParams.set('access_token', `${appId}|${appSecret}`);
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('Facebook debug_token failed');
-  }
-  const payload = await response.json();
-  const data = payload?.data || {};
-  return {
-    isValid: Boolean(data.is_valid),
-    appId: data.app_id || '',
-    userId: data.user_id || '',
-  };
-}
-
-async function fetchFacebookProfile(accessToken) {
-  if (facebookProfileFetcherForTest) {
-    return facebookProfileFetcherForTest(accessToken);
-  }
-
-  const url = new URL('https://graph.facebook.com/me');
-  url.searchParams.set('fields', 'id,name,email,picture.type(large)');
-  url.searchParams.set('access_token', accessToken);
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('Facebook profile fetch failed');
-  }
-  return response.json();
 }
 
 exports.login = async (req, res) => {
@@ -256,75 +212,6 @@ exports.customerGoogleLogin = async (req, res) => {
   return res.json({ customer: customerPayload(customer) });
 };
 
-exports.customerFacebookLogin = async (req, res) => {
-  const { accessToken } = req.body || {};
-  if (!accessToken) {
-    return res.status(400).json({ message: 'Thiếu thông tin đăng nhập Facebook' });
-  }
-
-  const facebookAppId = process.env.FACEBOOK_APP_ID;
-  const facebookAppSecret = process.env.FACEBOOK_APP_SECRET;
-  if (!facebookAppId || facebookAppId === 'undefined' || !facebookAppSecret || facebookAppSecret === 'undefined') {
-    return res.status(500).json({ message: 'Đăng nhập Facebook chưa được cấu hình' });
-  }
-
-  let tokenInfo;
-  try {
-    tokenInfo = await verifyFacebookAccessToken(accessToken, facebookAppId, facebookAppSecret);
-  } catch {
-    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
-  }
-
-  if (!tokenInfo?.isValid || String(tokenInfo.appId) !== String(facebookAppId) || !tokenInfo.userId) {
-    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
-  }
-
-  let facebookProfile;
-  try {
-    facebookProfile = await fetchFacebookProfile(accessToken);
-  } catch {
-    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
-  }
-
-  if (facebookProfile?.id && String(facebookProfile.id) !== String(tokenInfo.userId)) {
-    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
-  }
-
-  const normalizedEmail = normalizeGoogleEmail(facebookProfile?.email);
-  if (!normalizedEmail) {
-    return res.status(401).json({ message: 'Tài khoản Facebook chưa cung cấp email' });
-  }
-
-  const now = new Date();
-  const avatar = facebookAvatarUrl(facebookProfile);
-  let customer = await Customer.findOne({ email: normalizedEmail });
-  if (customer && !customer.isActive) {
-    return res.status(401).json({ message: 'Tài khoản không tồn tại hoặc đã bị khóa' });
-  }
-
-  if (!customer) {
-    customer = await Customer.create({
-      fullName: String(facebookProfile.name || '').trim() || fallbackGoogleName(normalizedEmail),
-      email: normalizedEmail,
-      avatar,
-      facebookSub: tokenInfo.userId,
-      emailVerifiedAt: now,
-      lastLoginAt: now,
-    });
-  } else {
-    customer.facebookSub = customer.facebookSub || tokenInfo.userId;
-    customer.avatar = customer.avatar || avatar;
-    customer.emailVerifiedAt = customer.emailVerifiedAt || now;
-    customer.lastLoginAt = now;
-    await customer.save();
-  }
-
-  const token = signCustomerToken(customer);
-  setCustomerCookie(res, token);
-
-  return res.json({ customer: customerPayload(customer) });
-};
-
 exports.customerMe = async (req, res) => {
   return res.json({ customer: customerPayload(req.customer) });
 };
@@ -396,10 +283,3 @@ exports.__setGoogleVerifierForTest = (verifier) => {
   googleVerifierForTest = verifier;
 };
 
-exports.__setFacebookVerifierForTest = (verifier) => {
-  facebookVerifierForTest = verifier;
-};
-
-exports.__setFacebookProfileFetcherForTest = (fetcher) => {
-  facebookProfileFetcherForTest = fetcher;
-};
