@@ -7,10 +7,7 @@ import AuthShell from './AuthShell';
 import { useCustomerAuthStore } from '@/store/customerAuthStore';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
-const FACEBOOK_LOGIN_TIMEOUT_MS = 20000;
 let googleScriptPromise;
-let facebookScriptPromise;
 
 function loadGoogleIdentityScript() {
   if (window.google?.accounts?.id) return Promise.resolve();
@@ -34,31 +31,6 @@ function loadGoogleIdentityScript() {
   });
 
   return googleScriptPromise;
-}
-
-function loadFacebookSdk() {
-  if (window.FB) return Promise.resolve();
-  if (facebookScriptPromise) return facebookScriptPromise;
-
-  facebookScriptPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[src="https://connect.facebook.net/vi_VN/sdk.js"]');
-    if (existing) {
-      existing.addEventListener('load', resolve, { once: true });
-      existing.addEventListener('error', reject, { once: true });
-      return;
-    }
-
-    window.fbAsyncInit = () => resolve();
-    const script = document.createElement('script');
-    script.src = 'https://connect.facebook.net/vi_VN/sdk.js';
-    script.async = true;
-    script.defer = true;
-    script.crossOrigin = 'anonymous';
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-
-  return facebookScriptPromise;
 }
 
 export default function LoginPage() {
@@ -142,11 +114,8 @@ export function SocialButtons({ onGoogleSuccess }) {
   const googleButtonRef = useRef(null);
   const onGoogleSuccessRef = useRef(onGoogleSuccess);
   const googleLogin = useCustomerAuthStore((s) => s.googleLogin);
-  const facebookLogin = useCustomerAuthStore((s) => s.facebookLogin);
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [facebookReady, setFacebookReady] = useState(false);
-  const [facebookLoading, setFacebookLoading] = useState(false);
 
   useEffect(() => {
     onGoogleSuccessRef.current = onGoogleSuccess;
@@ -202,95 +171,8 @@ export function SocialButtons({ onGoogleSuccess }) {
     };
   }, [googleLogin]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!facebookAppId) return undefined;
-
-    loadFacebookSdk()
-      .then(() => {
-        if (cancelled || !window.FB) return;
-        window.FB.init({
-          appId: facebookAppId,
-          cookie: false,
-          xfbml: false,
-          version: 'v20.0',
-        });
-        setFacebookReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) toast.error('Khong tai duoc Facebook Login');
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleFacebookLogin = () => {
-    if (!facebookAppId) {
-      toast.error('Facebook Login chua duoc cau hinh');
-      return;
-    }
-    if (!facebookReady || !window.FB) {
-      toast.error('Facebook Login chua san sang');
-      return;
-    }
-    if (typeof window.FB.login !== 'function') {
-      toast.error('Facebook Login chua san sang');
-      return;
-    }
-
-    setFacebookLoading(true);
-    let callbackReturned = false;
-    const timeoutId = setTimeout(() => {
-      if (callbackReturned) return;
-      setFacebookLoading(false);
-      toast.error('Facebook Login chua phan hoi. Kiem tra JavaScript SDK va mien duoc phep trong Meta.');
-    }, FACEBOOK_LOGIN_TIMEOUT_MS);
-
-    try {
-      window.FB.login(
-        (response) => {
-          callbackReturned = true;
-          clearTimeout(timeoutId);
-
-          if (!response?.authResponse?.accessToken) {
-            setFacebookLoading(false);
-            toast.error('Facebook khong tra ve token truy cap. Kiem tra quyen email trong Meta.');
-            return;
-          }
-
-          (async () => {
-            try {
-              await facebookLogin(response.authResponse.accessToken);
-              toast.success('Đăng nhập thành công');
-              onGoogleSuccessRef.current?.();
-            } catch (err) {
-              toast.error(err?.response?.data?.message || 'Đăng nhập Facebook thất bại');
-            } finally {
-              setFacebookLoading(false);
-            }
-          })();
-        },
-        { scope: 'public_profile,email' },
-      );
-    } catch (err) {
-      callbackReturned = true;
-      clearTimeout(timeoutId);
-      setFacebookLoading(false);
-      console.error('[facebook-login] FB.login failed:', err);
-      const detail = err?.message ? `: ${err.message}` : '';
-      toast.error(`Khong mo duoc Facebook Login${detail}. Kiem tra JavaScript SDK va mien duoc phep trong Meta.`);
-    }
-  };
-
   return (
     <div className="mt-6 space-y-3">
-      <button type="button" onClick={handleFacebookLogin} disabled={facebookLoading} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0] disabled:opacity-60">
-        <img src="/assets/icon/khac/ic_baseline-facebook.svg" alt="" className="h-5 w-5" />
-        {facebookLoading ? 'Đang xử lý...' : 'Tiếp tục với Facebook'}
-      </button>
       <div className="min-h-12 w-full">
         {googleClientId ? (
           <div className="relative min-h-12 w-full overflow-hidden rounded-full">

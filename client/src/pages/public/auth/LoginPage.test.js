@@ -26,48 +26,12 @@ test('LoginPage Google button uses Google Identity Services instead of developme
   assert.match(loginSource, /googleLogin\(response\.credential\)/);
   assert.doesNotMatch(loginSource, /Tiếp tục với Google[^]*onClick=\{socialToast\}/);
 });
-test('customer auth endpoints expose Facebook login API', () => {
-  assert.match(
-    endpointsSource,
-    /facebookLogin:\s*\(payload\)\s*=>\s*api\.post\('\/auth\/customer\/facebook',\s*payload\)/,
-  );
-});
-
-test('customer auth store logs in with Facebook access token and stores returned customer', () => {
-  assert.match(storeSource, /facebookLogin:\s*async\s*\(accessToken\)\s*=>/);
-  assert.match(storeSource, /customerAuthApi\.facebookLogin\(\{\s*accessToken\s*\}\)/);
-  assert.match(storeSource, /set\(\{\s*customer:\s*data\.customer\s*\|\|\s*null\s*\}\)/);
-});
-
-test('LoginPage Facebook button uses Facebook SDK instead of development toast', () => {
-  assert.match(loginSource, /VITE_FACEBOOK_APP_ID/);
-  assert.match(loginSource, /connect\.facebook\.net\/vi_VN\/sdk\.js/);
-  assert.match(loginSource, /FB\.init/);
-  assert.match(loginSource, /FB\.login/);
-  assert.match(loginSource, /scope:\s*'public_profile,email'/);
-  assert.match(loginSource, /facebookLogin\(response\.authResponse\.accessToken\)/);
-  assert.doesNotMatch(loginSource, /Facebook[^]*onClick=\{socialToast\}/);
-});
-
-test('LoginPage Facebook login clears loading when the SDK callback never returns', () => {
-  assert.match(loginSource, /FACEBOOK_LOGIN_TIMEOUT_MS/);
-  assert.match(loginSource, /setTimeout\(\(\)\s*=>\s*\{/);
-  assert.match(loginSource, /setFacebookLoading\(false\)/);
-  assert.match(loginSource, /clearTimeout\(timeoutId\)/);
-});
-
-test('LoginPage Facebook login reports SDK open failures with diagnostics', () => {
-  assert.match(loginSource, /typeof window\.FB\.login !== 'function'/);
-  assert.match(loginSource, /console\.error\('\[facebook-login\] FB\.login failed:', err\)/);
-  assert.match(loginSource, /Khong mo duoc Facebook Login.*Kiem tra JavaScript SDK va mien duoc phep/);
-});
-
-test('LoginPage Facebook login passes a plain callback to the SDK', () => {
-  assert.doesNotMatch(loginSource, /window\.FB\.login\(\s*async\s*\(/);
-  assert.match(loginSource, /\(async\s*\(\)\s*=>\s*\{/);
-});
-
-test('LoginPage Facebook login explains missing email permission when no token is returned', () => {
-  assert.match(loginSource, /Facebook khong tra ve token truy cap/);
-  assert.match(loginSource, /quyen email trong Meta/);
+test('customer auth removes Facebook login API surface', () => {
+  assert.doesNotMatch(endpointsSource, /facebookLogin/);
+  assert.doesNotMatch(endpointsSource, /\/auth\/customer\/facebook/);
+  assert.doesNotMatch(storeSource, /facebookLogin/);
+  assert.doesNotMatch(loginSource, /VITE_FACEBOOK_APP_ID/);
+  assert.doesNotMatch(loginSource, /connect\.facebook\.net/);
+  assert.doesNotMatch(loginSource, /FB\.login|FB\.init|fbAsyncInit/);
+  assert.doesNotMatch(loginSource, /Tiáº¿p tá»¥c vá»›i Facebook|Facebook Login/);
 });
