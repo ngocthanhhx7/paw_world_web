@@ -110,17 +110,17 @@ async function fetchFacebookProfile(accessToken) {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ message: 'Vui long nhap email va mat khau' });
+    return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu' });
   }
 
   const admin = await Admin.findOne({ email: email.toLowerCase() }).select('+password');
   if (!admin || !admin.isActive) {
-    return res.status(401).json({ message: 'Email hoac mat khau khong dung' });
+    return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
   }
 
   const ok = await admin.comparePassword(password);
   if (!ok) {
-    return res.status(401).json({ message: 'Email hoac mat khau khong dung' });
+    return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
   }
 
   const token = signToken(admin);
@@ -148,19 +148,19 @@ exports.me = async (req, res) => {
 
 exports.logout = async (req, res) => {
   res.clearCookie('paw_admin_token');
-  return res.json({ message: 'Da dang xuat' });
+  return res.json({ message: 'Đã đăng xuất' });
 };
 
 exports.customerRegister = async (req, res) => {
   const { fullName, email, password } = req.body;
   if (!fullName || !email || !password) {
-    return res.status(400).json({ message: 'Vui long nhap ho ten, email va mat khau' });
+    return res.status(400).json({ message: 'Vui lòng nhập họ tên, email và mật khẩu' });
   }
 
   const normalizedEmail = email.toLowerCase().trim();
   const existing = await Customer.findOne({ email: normalizedEmail });
   if (existing) {
-    return res.status(409).json({ message: 'Email nay da duoc dang ky' });
+    return res.status(409).json({ message: 'Email này đã được đăng ký' });
   }
 
   const customer = await Customer.create({
@@ -178,7 +178,7 @@ exports.customerRegister = async (req, res) => {
 exports.customerLogin = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ message: 'Vui long nhap email va mat khau' });
+    return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu' });
   }
 
   const customer = await Customer.findOne({ email: email.toLowerCase().trim() }).select('+password');
@@ -203,34 +203,34 @@ exports.customerLogin = async (req, res) => {
 exports.customerGoogleLogin = async (req, res) => {
   const { credential } = req.body || {};
   if (!credential) {
-    return res.status(400).json({ message: 'Thieu thong tin dang nhap Google' });
+    return res.status(400).json({ message: 'Thiếu thông tin đăng nhập Google' });
   }
 
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   if (!googleClientId || googleClientId === 'undefined') {
-    return res.status(500).json({ message: 'Dang nhap Google chua duoc cau hinh' });
+    return res.status(500).json({ message: 'Đăng nhập Google chưa được cấu hình' });
   }
 
   let googlePayload;
   try {
     googlePayload = await verifyGoogleCredential(credential, googleClientId);
   } catch (err) {
-    return res.status(401).json({ message: 'Dang nhap Google khong hop le' });
+    return res.status(401).json({ message: 'Đăng nhập Google không hợp lệ' });
   }
 
   if (!googlePayload?.email_verified) {
-    return res.status(401).json({ message: 'Email Google chua duoc xac minh' });
+    return res.status(401).json({ message: 'Email Google chưa được xác minh' });
   }
 
   const normalizedEmail = normalizeGoogleEmail(googlePayload.email);
   if (!normalizedEmail) {
-    return res.status(401).json({ message: 'Dang nhap Google khong hop le' });
+    return res.status(401).json({ message: 'Đăng nhập Google không hợp lệ' });
   }
 
   const now = new Date();
   let customer = await Customer.findOne({ email: normalizedEmail });
   if (customer && !customer.isActive) {
-    return res.status(401).json({ message: 'Tai khoan khong ton tai hoac da bi khoa' });
+    return res.status(401).json({ message: 'Tài khoản không tồn tại hoặc đã bị khóa' });
   }
 
   if (!customer) {
@@ -259,47 +259,47 @@ exports.customerGoogleLogin = async (req, res) => {
 exports.customerFacebookLogin = async (req, res) => {
   const { accessToken } = req.body || {};
   if (!accessToken) {
-    return res.status(400).json({ message: 'Thieu thong tin dang nhap Facebook' });
+    return res.status(400).json({ message: 'Thiếu thông tin đăng nhập Facebook' });
   }
 
   const facebookAppId = process.env.FACEBOOK_APP_ID;
   const facebookAppSecret = process.env.FACEBOOK_APP_SECRET;
   if (!facebookAppId || facebookAppId === 'undefined' || !facebookAppSecret || facebookAppSecret === 'undefined') {
-    return res.status(500).json({ message: 'Dang nhap Facebook chua duoc cau hinh' });
+    return res.status(500).json({ message: 'Đăng nhập Facebook chưa được cấu hình' });
   }
 
   let tokenInfo;
   try {
     tokenInfo = await verifyFacebookAccessToken(accessToken, facebookAppId, facebookAppSecret);
   } catch {
-    return res.status(401).json({ message: 'Dang nhap Facebook khong hop le' });
+    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
   }
 
   if (!tokenInfo?.isValid || String(tokenInfo.appId) !== String(facebookAppId) || !tokenInfo.userId) {
-    return res.status(401).json({ message: 'Dang nhap Facebook khong hop le' });
+    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
   }
 
   let facebookProfile;
   try {
     facebookProfile = await fetchFacebookProfile(accessToken);
   } catch {
-    return res.status(401).json({ message: 'Dang nhap Facebook khong hop le' });
+    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
   }
 
   if (facebookProfile?.id && String(facebookProfile.id) !== String(tokenInfo.userId)) {
-    return res.status(401).json({ message: 'Dang nhap Facebook khong hop le' });
+    return res.status(401).json({ message: 'Đăng nhập Facebook không hợp lệ' });
   }
 
   const normalizedEmail = normalizeGoogleEmail(facebookProfile?.email);
   if (!normalizedEmail) {
-    return res.status(401).json({ message: 'Tai khoan Facebook chua cung cap email' });
+    return res.status(401).json({ message: 'Tài khoản Facebook chưa cung cấp email' });
   }
 
   const now = new Date();
   const avatar = facebookAvatarUrl(facebookProfile);
   let customer = await Customer.findOne({ email: normalizedEmail });
   if (customer && !customer.isActive) {
-    return res.status(401).json({ message: 'Tai khoan khong ton tai hoac da bi khoa' });
+    return res.status(401).json({ message: 'Tài khoản không tồn tại hoặc đã bị khóa' });
   }
 
   if (!customer) {
@@ -331,12 +331,12 @@ exports.customerMe = async (req, res) => {
 
 exports.customerLogout = async (req, res) => {
   res.clearCookie('paw_customer_token');
-  return res.json({ message: 'Da dang xuat' });
+  return res.json({ message: 'Đã đăng xuất' });
 };
 
 exports.customerForgotPassword = async (req, res) => {
   const { email } = req.body;
-  const response = { message: 'Neu email ton tai, PawWorld se gui huong dan dat lai mat khau' };
+  const response = { message: 'Nếu email tồn tại, PawWorld sẽ gửi hướng dẫn đặt lại mật khẩu' };
 
   if (!email) {
     return res.json(response);
@@ -358,8 +358,8 @@ exports.customerForgotPassword = async (req, res) => {
   try {
     await sendMail({
       to: customer.email,
-      subject: 'Dat lai mat khau PawWorld',
-      html: `<p>Ban da yeu cau dat lai mat khau tai PawWorld.</p><p>Nhan vao lien ket ben duoi de dat lai mat khau:</p><p><a href="${resetLink}">${resetLink}</a></p><p>Lien ket co hieu luc trong 30 phut.</p>`,
+      subject: 'Đặt lại mật khẩu PawWorld',
+      html: `<p>Bạn đã yêu cầu đặt lại mật khẩu tại PawWorld.</p><p>Nhấn vào liên kết bên dưới để đặt lại mật khẩu:</p><p><a href="${resetLink}">${resetLink}</a></p><p>Liên kết có hiệu lực trong 30 phút.</p>`,
     });
   } catch (err) {
     console.error('[forgot-password] Failed to send email:', err.message);
@@ -371,7 +371,7 @@ exports.customerForgotPassword = async (req, res) => {
 exports.customerResetPassword = async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) {
-    return res.status(400).json({ message: 'Thieu token hoac mat khau moi' });
+    return res.status(400).json({ message: 'Thiếu token hoặc mật khẩu mới' });
   }
 
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
@@ -381,7 +381,7 @@ exports.customerResetPassword = async (req, res) => {
   }).select('+password');
 
   if (!customer) {
-    return res.status(400).json({ message: 'Lien ket dat lai mat khau khong hop le hoac da het han' });
+    return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn' });
   }
 
   customer.password = password;
@@ -389,7 +389,7 @@ exports.customerResetPassword = async (req, res) => {
   customer.clearPasswordResetToken();
   await customer.save();
 
-  return res.json({ message: 'Da cap nhat mat khau' });
+  return res.json({ message: 'Đã cập nhật mật khẩu' });
 };
 
 exports.__setGoogleVerifierForTest = (verifier) => {

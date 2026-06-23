@@ -146,7 +146,7 @@ exports.getById = async (req, res) => {
     .select('-password -resetPasswordTokenHash -resetPasswordExpiresAt')
     .lean();
 
-  if (!customer) return res.status(404).json({ message: 'Khong tim thay khach hang' });
+  if (!customer) return res.status(404).json({ message: 'Không tìm thấy khách hàng' });
 
   const orders = await findOrdersForCustomer(customer);
   const { summary, recentOrders } = summarizeOrders(orders);
@@ -161,11 +161,11 @@ exports.getById = async (req, res) => {
 exports.updateStatus = async (req, res) => {
   const { isActive } = req.body;
   if (typeof isActive !== 'boolean') {
-    return res.status(400).json({ message: 'Trang thai khong hop le' });
+    return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
   }
 
   const customer = await Customer.findById(req.params.id);
-  if (!customer) return res.status(404).json({ message: 'Khong tim thay khach hang' });
+  if (!customer) return res.status(404).json({ message: 'Không tìm thấy khách hàng' });
 
   if (customer.isActive !== isActive) {
     customer.isActive = isActive;

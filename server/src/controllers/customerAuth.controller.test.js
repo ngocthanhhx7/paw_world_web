@@ -108,7 +108,7 @@ test('customerGoogleLogin rejects missing credential', async () => {
   await authController.customerGoogleLogin(req, res);
 
   assert.equal(res.statusCode, 400);
-  assert.deepEqual(res.body, { message: 'Thieu thong tin dang nhap Google' });
+  assert.deepEqual(res.body, { message: 'Thiếu thông tin đăng nhập Google' });
 });
 
 test('customerGoogleLogin reports missing server Google client id', async () => {
@@ -125,7 +125,7 @@ test('customerGoogleLogin reports missing server Google client id', async () => 
   }
 
   assert.equal(res.statusCode, 500);
-  assert.deepEqual(res.body, { message: 'Dang nhap Google chua duoc cau hinh' });
+  assert.deepEqual(res.body, { message: 'Đăng nhập Google chưa được cấu hình' });
 });
 
 test('customerGoogleLogin rejects invalid Google credential', async () => {
@@ -146,7 +146,7 @@ test('customerGoogleLogin rejects invalid Google credential', async () => {
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Dang nhap Google khong hop le' });
+  assert.deepEqual(res.body, { message: 'Đăng nhập Google không hợp lệ' });
 });
 
 test('customerGoogleLogin rejects unverified Google email', async () => {
@@ -171,7 +171,7 @@ test('customerGoogleLogin rejects unverified Google email', async () => {
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Email Google chua duoc xac minh' });
+  assert.deepEqual(res.body, { message: 'Email Google chưa được xác minh' });
 });
 
 test('customerGoogleLogin creates a customer for a verified new Google email', async () => {
@@ -293,7 +293,7 @@ test('customerFacebookLogin rejects missing access token', async () => {
   await authController.customerFacebookLogin(req, res);
 
   assert.equal(res.statusCode, 400);
-  assert.deepEqual(res.body, { message: 'Thieu thong tin dang nhap Facebook' });
+  assert.deepEqual(res.body, { message: 'Thiếu thông tin đăng nhập Facebook' });
 });
 
 test('customerFacebookLogin reports missing Facebook config', async () => {
@@ -313,7 +313,7 @@ test('customerFacebookLogin reports missing Facebook config', async () => {
   }
 
   assert.equal(res.statusCode, 500);
-  assert.deepEqual(res.body, { message: 'Dang nhap Facebook chua duoc cau hinh' });
+  assert.deepEqual(res.body, { message: 'Đăng nhập Facebook chưa được cấu hình' });
 });
 
 test('customerFacebookLogin rejects invalid Facebook access token', async () => {
@@ -339,7 +339,7 @@ test('customerFacebookLogin rejects invalid Facebook access token', async () => 
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Dang nhap Facebook khong hop le' });
+  assert.deepEqual(res.body, { message: 'Đăng nhập Facebook không hợp lệ' });
 });
 
 test('customerFacebookLogin rejects Facebook token from another app', async () => {
@@ -365,7 +365,7 @@ test('customerFacebookLogin rejects Facebook token from another app', async () =
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Dang nhap Facebook khong hop le' });
+  assert.deepEqual(res.body, { message: 'Đăng nhập Facebook không hợp lệ' });
 });
 
 test('customerFacebookLogin rejects Facebook profile without email', async () => {
@@ -396,7 +396,7 @@ test('customerFacebookLogin rejects Facebook profile without email', async () =>
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Tai khoan Facebook chua cung cap email' });
+  assert.deepEqual(res.body, { message: 'Tài khoản Facebook chưa cung cấp email' });
 });
 
 test('customerFacebookLogin creates a customer for a valid Facebook profile', async () => {
@@ -568,7 +568,7 @@ test('customerFacebookLogin rejects locked existing customer', async () => {
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Tai khoan khong ton tai hoac da bi khoa' });
+  assert.deepEqual(res.body, { message: 'Tài khoản không tồn tại hoặc đã bị khóa' });
 });
 
 test('customerForgotPassword returns a generic response and exposes resetUrl outside production', async () => {
@@ -604,7 +604,7 @@ test('customerForgotPassword returns a generic response and exposes resetUrl out
 
   assert.equal(
     res.body.message,
-    'Neu email ton tai, PawWorld se gui huong dan dat lai mat khau',
+    'Nếu email tồn tại, PawWorld sẽ gửi hướng dẫn đặt lại mật khẩu',
   );
   assert.match(res.body.resetUrl, /^\/dat-lai-mat-khau\/[a-f0-9]{64}$/);
   assert.equal(customer.resetPasswordTokenHash.length, 64);
@@ -653,7 +653,7 @@ test('customerResetPassword hashes the token, clears reset state, and updates th
   assert.equal(customer.tokenVersion, 3);
   assert.equal(customer.resetPasswordTokenHash, '');
   assert.equal(customer.resetPasswordExpiresAt, null);
-  assert.deepEqual(res.body, { message: 'Da cap nhat mat khau' });
+  assert.deepEqual(res.body, { message: 'Đã cập nhật mật khẩu' });
 });
 
 test('requireCustomer reads paw_customer_token cookie and attaches req.customer', async () => {
@@ -722,7 +722,7 @@ test('requireCustomer rejects stale customer tokens after tokenVersion changes',
   }
 
   assert.equal(res.statusCode, 401);
-  assert.deepEqual(res.body, { message: 'Token khong hop le hoac da het han' });
+  assert.deepEqual(res.body, { message: 'Token không hợp lệ hoặc đã hết hạn' });
 });
 
 test('requireSameOriginJson rejects non-json customer auth requests', () => {
@@ -737,7 +737,7 @@ test('requireSameOriginJson rejects non-json customer auth requests', () => {
   });
 
   assert.equal(res.statusCode, 415);
-  assert.deepEqual(res.body, { message: 'Yeu cau phai su dung JSON' });
+  assert.deepEqual(res.body, { message: 'Yêu cầu phải sử dụng JSON' });
 });
 
 test('requireSameOriginJson rejects disallowed origins', () => {
@@ -752,7 +752,7 @@ test('requireSameOriginJson rejects disallowed origins', () => {
   });
 
   assert.equal(res.statusCode, 403);
-  assert.deepEqual(res.body, { message: 'Nguon yeu cau khong hop le' });
+  assert.deepEqual(res.body, { message: 'Nguồn yêu cầu không hợp lệ' });
 });
 
 test('requireSameOriginJson accepts allowed json requests', () => {

@@ -11,7 +11,7 @@ const customerSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Email khong hop le'],
+      match: [/^\S+@\S+\.\S+$/, 'Email không hợp lệ'],
     },
     password: {
       type: String,

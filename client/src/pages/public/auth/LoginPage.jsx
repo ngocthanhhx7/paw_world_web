@@ -134,7 +134,7 @@ export function SocialButtons({ onGoogleSuccess }) {
           client_id: googleClientId,
           callback: async (response) => {
             if (!response?.credential) {
-              toast.error('Dang nhap Google khong hop le');
+              toast.error('Đăng nhập Google không hợp lệ');
               return;
             }
 
@@ -163,7 +163,7 @@ export function SocialButtons({ onGoogleSuccess }) {
         setGoogleReady(true);
       })
       .catch(() => {
-        if (!cancelled) toast.error('Khong tai duoc Google Login');
+        if (!cancelled) toast.error('Không tải được Google Login');
       });
 
     return () => {
@@ -184,7 +184,7 @@ export function SocialButtons({ onGoogleSuccess }) {
             ) : null}
           </div>
         ) : (
-          <button type="button" onClick={() => toast.error('Google Login chua duoc cau hinh')} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0]">
+          <button type="button" onClick={() => toast.error('Google Login chưa được cấu hình')} className="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2d6c8] bg-white text-[12px] font-extrabold uppercase tracking-[0.06em] text-[#252020] transition hover:bg-[#fff8f0]">
             <span className="grid h-5 w-5 place-items-center rounded-full bg-[#f5f5f5] text-[13px] font-black text-[#4285f4]">G</span>
             Tiếp tục với Google
           </button>

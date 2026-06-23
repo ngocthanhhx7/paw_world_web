@@ -143,16 +143,16 @@ function MealCard({ product, badge }) {
 
   const handleAdd = async () => {
     if (!cartProductId) {
-      toast.error('San pham mau, vui long chon san pham trong danh muc');
+      toast.error('Sản phẩm mẫu, vui lòng chọn sản phẩm trong danh mục');
       return;
     }
 
     setAdding(true);
     try {
       await addToCart(cartProductId, 1);
-      toast.success('Da them vao gio hang');
+      toast.success('Đã thêm vào giỏ hàng');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Khong them duoc san pham');
+      toast.error(err?.response?.data?.message || 'Không thêm được sản phẩm');
     } finally {
       setAdding(false);
     }

@@ -81,7 +81,7 @@ test('addItem rejects AI-combo-only products from the generic cart route', async
     );
 
     assert.equal(res.statusCode, 404);
-    assert.match(res.payload.message, /không tồn tại|khÃ´ng tá»“n táº¡i/i);
+    assert.match(res.payload.message, /không tồn tại/i);
   } finally {
     Product.findById = originalFindById;
   }

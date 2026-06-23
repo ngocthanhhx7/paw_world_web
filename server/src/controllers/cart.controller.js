@@ -80,7 +80,7 @@ exports.addComboItems = async (req, res) => {
   const productIds = [...quantitiesByProductId.keys()];
   const products = await Product.find({ _id: { $in: productIds }, isActive: true });
   if (products.length !== productIds.length) {
-    return res.status(404).json({ message: 'Sáº£n pháº©m khÃ´ng tá»“n táº¡i' });
+    return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
   }
 
   const cartId = ensureCartId(req, res);

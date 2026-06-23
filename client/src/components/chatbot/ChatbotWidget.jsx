@@ -64,7 +64,7 @@ function parseSseBlock(block) {
   try {
     return { event, data: JSON.parse(data.join('\n')) };
   } catch (error) {
-    return { event: 'error', data: { message: 'Khong doc duoc phan hoi tu AI.' } };
+    return { event: 'error', data: { message: 'Không đọc được phản hồi từ AI.' } };
   }
 }
 
