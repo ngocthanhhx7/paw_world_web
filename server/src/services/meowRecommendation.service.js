@@ -495,6 +495,7 @@ async function fetchCatalogProducts(ProductModel = Product, profile = {}) {
     const products = await Promise.race([
       ProductModel.find({
         isActive: true,
+        stock: { $gt: 0 },
         foodType: { $in: ['dry', 'wet', 'mixed'] },
         $or: [{ isAiComboOnly: true }, { isAiComboOnly: { $ne: true } }],
       })
@@ -508,6 +509,7 @@ async function fetchCatalogProducts(ProductModel = Product, profile = {}) {
         const treatProducts = await Promise.race([
           ProductModel.find({
             isActive: true,
+            stock: { $gt: 0 },
             foodType: { $in: ['wet', 'mixed'] },
             $and: [
               { $or: [{ isAiComboOnly: true }, { isAiComboOnly: { $ne: true } }] },

@@ -320,6 +320,7 @@ test('buildRecommendationForProfile requests AI-only and public active food prod
 
   const query = queries[0];
   assert.equal(query.isActive, true);
+  assert.deepEqual(query.stock, { $gt: 0 });
   assert.deepEqual(query.foodType, { $in: ['dry', 'wet', 'mixed'] });
   assert.deepEqual(query.$or, [{ isAiComboOnly: true }, { isAiComboOnly: { $ne: true } }]);
 });
@@ -706,6 +707,8 @@ test('buildRecommendationForProfile includes soup treat from a supplemental cata
   });
 
   assert.equal(queries.length, 2);
+  assert.deepEqual(queries[0].stock, { $gt: 0 });
+  assert.deepEqual(queries[1].stock, { $gt: 0 });
   assert.deepEqual(recommendation.products.map((product) => product.productId), [dryId, wetId, treatId]);
   assert.deepEqual(recommendation.products.map((product) => product.productRole), ['base', 'wet', 'treat']);
   assert.deepEqual(recommendation.products.map((product) => product.portionPercent), [75, 20, 5]);
