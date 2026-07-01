@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 
 import { productApi } from '@/api/endpoints';
 import { useCartStore } from '@/store/cartStore';
+import { analyticsService } from '@/services/analyticsService';
 import { formatPrice } from '@/utils/format';
 
 /* --------------------------- Static helpers --------------------------- */
@@ -116,6 +117,16 @@ export default function ProductDetailPage() {
     productApi.get(slug).then((d) => {
       setProduct(d.product);
       setRelated(d.related || []);
+      analyticsService.trackEvent(
+        'product_viewed',
+        {
+          productId: d.product?._id,
+          productName: d.product?.name,
+          price: d.product?.salePrice || d.product?.price,
+          category: d.product?.category?.slug || d.product?.category?.name,
+        },
+        { eventType: 'commerce', pagePath: `/san-pham/${slug}`, dedupeKey: `product_view:${slug}` },
+      );
     });
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [slug]);
@@ -132,6 +143,7 @@ export default function ProductDetailPage() {
 
   const handleAdd = async () => {
     try {
+      analyticsService.trackEvent('cta_click', { cta: 'product_detail_add_to_cart', productId: product._id }, { eventType: 'engagement' });
       await addToCart(product._id, 1);
       toast.success('Đã thêm vào giỏ');
     } catch (err) {
@@ -141,6 +153,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = async () => {
     try {
+      analyticsService.trackEvent('cta_click', { cta: 'product_detail_buy_now', productId: product._id }, { eventType: 'engagement' });
       await addToCart(product._id, 1);
       navigate('/thanh-toan');
     } catch (err) {

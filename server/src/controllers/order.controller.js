@@ -8,6 +8,7 @@ const {
   mapPayosWebhookStatus,
   verifyWebhook,
 } = require('../services/payos.service');
+const { recordEvent, upsertSession } = require('../services/analytics/analytics.service');
 
 const PACKAGING_FEE = 5000;
 
@@ -137,6 +138,28 @@ exports.create = async (req, res) => {
     };
   }
 
+  const analytics = req.body?.analytics;
+  if (analytics?.anonymousId && analytics?.sessionId) {
+    recordEvent({
+      eventName: paymentMethod === 'bank_transfer' ? 'checkout_started' : 'purchase_success',
+      eventType: 'commerce',
+      anonymousId: analytics.anonymousId,
+      sessionId: analytics.sessionId,
+      userId: analytics.userId,
+      pagePath: analytics.pagePath || '/thanh-toan',
+      dedupeKey: `${paymentMethod === 'bank_transfer' ? 'checkout' : 'purchase'}:${order.orderCode}`,
+      metadata: {
+        orderId: String(order._id),
+        orderCode: order.orderCode,
+        totalAmount: order.total,
+        currency: 'VND',
+        itemCount: order.items.length,
+        paymentMethod: order.paymentMethod,
+        status: order.status,
+      },
+    }).catch(() => {});
+  }
+
   res.status(201).json(responseBody);
 };
 
@@ -176,6 +199,35 @@ exports.handlePayosWebhook = async (req, res) => {
   order.paymentRaw = webhookData;
   if (paymentStatus === 'paid' && !order.paidAt) {
     order.paidAt = new Date();
+    const anonymousId = order.cartId ? `cart_${order.cartId}` : `order_${order.orderCode}`;
+    const sessionId = `payos_${order.orderCode}`;
+    upsertSession({
+      sessionId,
+      anonymousId,
+      pagePath: '/payos/webhook',
+      source: 'PayOS',
+      medium: 'payment_webhook',
+      deviceType: 'server',
+      browser: 'server',
+      os: 'server',
+    }).catch(() => {});
+    recordEvent({
+      eventName: 'purchase_success',
+      eventType: 'commerce',
+      anonymousId,
+      sessionId,
+      pagePath: '/payos/webhook',
+      dedupeKey: `payos_paid:${order.orderCode}`,
+      metadata: {
+        orderId: String(order._id),
+        orderCode: order.orderCode,
+        totalAmount: order.total,
+        currency: 'VND',
+        itemCount: order.items.length,
+        paymentMethod: order.paymentMethod,
+        status: 'paid',
+      },
+    }).catch(() => {});
   }
   await order.save();
 

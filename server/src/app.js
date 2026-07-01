@@ -16,12 +16,14 @@ const leadRoutes = require('./routes/lead.routes');
 const authRoutes = require('./routes/auth.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
 const petProfileRoutes = require('./routes/petProfile.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 const adminProductRoutes = require('./routes/admin/product.admin.routes');
 const adminCategoryRoutes = require('./routes/admin/category.admin.routes');
 const adminOrderRoutes = require('./routes/admin/order.admin.routes');
 const adminLeadRoutes = require('./routes/admin/lead.admin.routes');
 const adminStatRoutes = require('./routes/admin/stat.admin.routes');
 const adminCustomerRoutes = require('./routes/admin/customer.admin.routes');
+const adminAnalyticsRoutes = require('./routes/admin/analytics.admin.routes');
 
 const app = express();
 
@@ -65,6 +67,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/customer/pet-profiles', petProfileRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 /* ------------------------------ Admin API --------------------------------- */
 app.use('/api/admin/products', adminProductRoutes);
@@ -73,6 +76,7 @@ app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/leads', adminLeadRoutes);
 app.use('/api/admin/stats', adminStatRoutes);
 app.use('/api/admin/customers', adminCustomerRoutes);
+app.use('/api/admin/analytics', adminAnalyticsRoutes);
 
 /* -------------------------------- 404 + Err ------------------------------- */
 app.use((req, res) => {

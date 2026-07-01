@@ -32,7 +32,9 @@ import AdminCategoriesPage from '@/pages/admin/AdminCategoriesPage';
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminLeadsPage from '@/pages/admin/AdminLeadsPage';
+import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import RequireAdmin from '@/components/admin/RequireAdmin';
+import AnalyticsTracker from '@/components/analytics/AnalyticsTracker';
 
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
@@ -50,52 +52,56 @@ export default function App() {
   }, [fetchCart, initAuth, initCustomerAuth]);
 
   return (
-    <Routes>
-      <Route element={<MeowQuizzLayout />}>
-        <Route path="/meow-quizz" element={<MeowQuizPage />} />
-        <Route path="/meow-quizz/ho-so" element={<PetProfilesPage />} />
-        <Route path="/meow-quizz/ho-so/:id" element={<PetProfileDetailPage />} />
-        <Route path="/meow-quizz/ho-so/:id/chinh-sua" element={<PetProfileEditPage />} />
-        <Route path="/meow-quizz/ket-qua/:profileId" element={<RecommendationPage />} />
-      </Route>
+    <>
+      <AnalyticsTracker />
+      <Routes>
+        <Route element={<MeowQuizzLayout />}>
+          <Route path="/meow-quizz" element={<MeowQuizPage />} />
+          <Route path="/meow-quizz/ho-so" element={<PetProfilesPage />} />
+          <Route path="/meow-quizz/ho-so/:id" element={<PetProfileDetailPage />} />
+          <Route path="/meow-quizz/ho-so/:id/chinh-sua" element={<PetProfileEditPage />} />
+          <Route path="/meow-quizz/ket-qua/:profileId" element={<RecommendationPage />} />
+        </Route>
 
-      {/* Public site */}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/gioi-thieu" element={<AboutPage />} />
-        <Route path="/danh-muc" element={<CategoryPage />} />
-        <Route path="/danh-muc/:slug" element={<CategoryPage />} />
-        <Route path="/san-pham/:slug" element={<ProductDetailPage />} />
-        <Route path="/gio-hang" element={<CartPage />} />
-        <Route path="/thanh-toan" element={<CheckoutPage />} />
-        <Route path="/dat-hang-thanh-cong/:code" element={<OrderSuccessPage />} />
-        <Route path="/lien-he-tu-van" element={<ContactRequestPage />} />
-        <Route path="/tra-cuu-don-hang" element={<OrderTrackingPage />} />
-        <Route path="/dang-nhap" element={<LoginPage />} />
-        <Route path="/dang-ky" element={<RegisterPage />} />
-        <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />
-        <Route path="/dat-lai-mat-khau/:token" element={<ResetPasswordPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
+        {/* Public site */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/gioi-thieu" element={<AboutPage />} />
+          <Route path="/danh-muc" element={<CategoryPage />} />
+          <Route path="/danh-muc/:slug" element={<CategoryPage />} />
+          <Route path="/san-pham/:slug" element={<ProductDetailPage />} />
+          <Route path="/gio-hang" element={<CartPage />} />
+          <Route path="/thanh-toan" element={<CheckoutPage />} />
+          <Route path="/dat-hang-thanh-cong/:code" element={<OrderSuccessPage />} />
+          <Route path="/lien-he-tu-van" element={<ContactRequestPage />} />
+          <Route path="/tra-cuu-don-hang" element={<OrderTrackingPage />} />
+          <Route path="/dang-nhap" element={<LoginPage />} />
+          <Route path="/dang-ky" element={<RegisterPage />} />
+          <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />
+          <Route path="/dat-lai-mat-khau/:token" element={<ResetPasswordPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
 
-      {/* Admin */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route
-        path="/admin"
-        element={
-          <RequireAdmin>
-            <AdminLayout />
-          </RequireAdmin>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboardPage />} />
-        <Route path="products" element={<AdminProductsPage />} />
-        <Route path="categories" element={<AdminCategoriesPage />} />
-        <Route path="orders" element={<AdminOrdersPage />} />
-        <Route path="users" element={<AdminUsersPage />} />
-        <Route path="leads" element={<AdminLeadsPage />} />
-      </Route>
-    </Routes>
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminLayout />
+            </RequireAdmin>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="categories" element={<AdminCategoriesPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="leads" element={<AdminLeadsPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 }

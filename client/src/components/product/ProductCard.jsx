@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 import { formatPrice } from '@/utils/format';
 import { useCartStore } from '@/store/cartStore';
+import { analyticsService } from '@/services/analyticsService';
 
 export default function ProductCard({ product }) {
   const addToCart = useCartStore((s) => s.addToCart);
@@ -16,6 +17,7 @@ export default function ProductCard({ product }) {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
+      analyticsService.trackEvent('cta_click', { cta: 'product_card_add_to_cart', productId: product._id }, { eventType: 'engagement' });
       await addToCart(product._id, 1);
       toast.success('Đã thêm vào giỏ hàng');
     } catch (err) {

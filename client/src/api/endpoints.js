@@ -29,6 +29,13 @@ export const leadApi = {
   create: (payload) => api.post('/leads', payload).then((r) => r.data),
 };
 
+export const analyticsApi = {
+  startSession: (payload) => api.post('/analytics/session/start', payload).then((r) => r.data),
+  heartbeat: (payload) => api.post('/analytics/session/heartbeat', payload).then((r) => r.data),
+  pageView: (payload) => api.post('/analytics/page-view', payload).then((r) => r.data),
+  event: (payload) => api.post('/analytics/event', payload).then((r) => r.data),
+};
+
 export const authApi = {
   login: (payload) => api.post('/auth/admin/login', payload).then((r) => r.data),
   me: () => api.get('/auth/admin/me').then((r) => r.data),
@@ -87,6 +94,14 @@ export const adminApi = {
   deleteLead: (id) => api.delete(`/admin/leads/${id}`).then((r) => r.data),
   // stats
   overview: () => api.get('/admin/stats/overview').then((r) => r.data),
+  analyticsOverview: (params) => api.get('/admin/analytics/overview', { params }).then((r) => r.data),
+  analyticsTrafficSources: (params) =>
+    api.get('/admin/analytics/traffic-sources', { params }).then((r) => r.data),
+  analyticsFunnel: (params) => api.get('/admin/analytics/funnel', { params }).then((r) => r.data),
+  analyticsAiUsage: (params) => api.get('/admin/analytics/ai-usage', { params }).then((r) => r.data),
+  analyticsPages: (params) => api.get('/admin/analytics/pages', { params }).then((r) => r.data),
+  generateAnalyticsReport: (params) =>
+    api.post('/admin/analytics/ai-report/generate', null, { params }).then((r) => r.data),
   // customers
   listCustomers: (params) => api.get('/admin/customers', { params }).then((r) => r.data),
   getCustomer: (id) => api.get(`/admin/customers/${id}`).then((r) => r.data),

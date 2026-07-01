@@ -139,12 +139,12 @@ exports.customerLogin = async (req, res) => {
 
   const customer = await Customer.findOne({ email: email.toLowerCase().trim() }).select('+password');
   if (!customer || !customer.isActive) {
-    return res.status(401).json({ message: 'Email hoac mat khau khong dung' });
+    return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
   }
 
   const ok = await customer.comparePassword(password);
   if (!ok) {
-    return res.status(401).json({ message: 'Email hoac mat khau khong dung' });
+    return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
   }
 
   customer.lastLoginAt = new Date();

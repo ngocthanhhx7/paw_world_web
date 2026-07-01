@@ -5,6 +5,7 @@ import { Bone, ChevronLeft, ChevronRight, Info, Leaf, ShoppingBag, Waves, Zap } 
 
 import { petProfileApi } from '@/api/endpoints';
 import { useCartStore } from '@/store/cartStore';
+import { analyticsService } from '@/services/analyticsService';
 import { formatPrice } from '@/utils/format';
 
 const productFallback = '/assets/paw/Cat Food Kit.png';
@@ -210,14 +211,36 @@ export default function RecommendationPage() {
   useEffect(() => {
     if (!selectedDurationDays) return;
     let active = true;
+    const startedAt = Date.now();
     setLoading(true);
     setErrorMessage('');
+    analyticsService.trackEvent(
+      'ai_started',
+      { aiFeatureName: 'meow_quizz_recommendation', profileId, durationDays: selectedDurationDays },
+      { eventType: 'ai' },
+    );
+    analyticsService.trackEvent(
+      'ai_submitted',
+      { aiFeatureName: 'meow_quizz_recommendation', inputLength: 0, durationDays: selectedDurationDays },
+      { eventType: 'ai' },
+    );
     petProfileApi.recommend(profileId, { durationDays: selectedDurationDays })
       .then((response) => {
         if (active) {
           setData(response);
           setActiveProductIndex(0);
           setErrorMessage('');
+          analyticsService.trackEvent(
+            'ai_completed',
+            {
+              aiFeatureName: 'meow_quizz_recommendation',
+              durationMs: Date.now() - startedAt,
+              resultType: 'meal_kit_recommendation',
+              productCount: pickProducts(response?.recommendation || response?.profile?.aiSummary || {}).length,
+              status: 'success',
+            },
+            { eventType: 'ai' },
+          );
         }
       })
       .catch((err) => {
@@ -227,6 +250,16 @@ export default function RecommendationPage() {
             : err?.response?.data?.message || 'Chưa tạo được gợi ý AI';
           setErrorMessage(message);
           toast.error(message);
+          analyticsService.trackEvent(
+            'ai_failed',
+            {
+              aiFeatureName: 'meow_quizz_recommendation',
+              durationMs: Date.now() - startedAt,
+              status: 'failed',
+              errorCode: err?.response?.status || 'unknown',
+            },
+            { eventType: 'ai' },
+          );
         }
       })
       .finally(() => {
@@ -311,6 +344,7 @@ export default function RecommendationPage() {
   }
 
   const checkout = async () => {
+    analyticsService.trackEvent('cta_click', { cta: 'ai_recommendation_checkout', profileId }, { eventType: 'engagement' });
     if (!cartableProducts.length || cartableProducts.length !== products.length) {
       toast.error('Combo hiện chưa có sản phẩm trong danh mục, mời sen chọn sản phẩm phù hợp.');
       navigate('/danh-muc');

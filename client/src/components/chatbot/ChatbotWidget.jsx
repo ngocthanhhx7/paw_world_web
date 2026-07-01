@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Paperclip, Send, Trash2, X } from 'lucide-react';
+import { analyticsService } from '@/services/analyticsService';
 
 const SAMPLE_QUESTIONS = [
   'Kế hoạch dinh dưỡng',
@@ -308,6 +309,7 @@ export default function ChatbotWidget() {
   const sendMessage = async (presetText) => {
     const text = (presetText || draft).trim();
     if (!text || isSending) return;
+    const startedAt = Date.now();
 
     const imageForRequest = selectedImage;
     const userMessage = {
@@ -329,6 +331,15 @@ export default function ChatbotWidget() {
     setSelectedImage(null);
     setError('');
     setIsSending(true);
+    analyticsService.trackEvent(
+      'ai_submitted',
+      {
+        aiFeatureName: 'pawworld_genius_chatbot',
+        inputLength: text.length,
+        hasImage: Boolean(imageForRequest),
+      },
+      { eventType: 'ai' },
+    );
 
     try {
       const response = await fetch('/api/chatbot/message', {
@@ -393,6 +404,16 @@ export default function ChatbotWidget() {
           content: 'Mình chưa nhận được nội dung trả lời. Bạn thử hỏi lại ngắn gọn hơn nhé.',
         }));
       }
+      analyticsService.trackEvent(
+        'ai_completed',
+        {
+          aiFeatureName: 'pawworld_genius_chatbot',
+          durationMs: Date.now() - startedAt,
+          status: 'success',
+          resultType: 'chat_answer',
+        },
+        { eventType: 'ai' },
+      );
     } catch (requestError) {
       const message =
         requestError?.message || 'PAWWORLD GENIUS AI đang tạm thời bận. Bạn thử lại sau nhé.';
@@ -401,6 +422,16 @@ export default function ChatbotWidget() {
         pending: false,
         content: message,
       }));
+      analyticsService.trackEvent(
+        'ai_failed',
+        {
+          aiFeatureName: 'pawworld_genius_chatbot',
+          durationMs: Date.now() - startedAt,
+          status: 'failed',
+          errorCode: requestError?.name || 'request_error',
+        },
+        { eventType: 'ai' },
+      );
     } finally {
       setIsSending(false);
     }
@@ -451,7 +482,10 @@ export default function ChatbotWidget() {
         <button
           type="button"
           aria-label="Mở PAWWORLD GENIUS AI"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            analyticsService.trackEvent('ai_started', { aiFeatureName: 'pawworld_genius_chatbot' }, { eventType: 'ai' });
+            setIsOpen(true);
+          }}
           className="fixed bottom-5 right-5 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-sun-400 shadow-soft transition hover:-translate-y-0.5 hover:bg-sun-500"
         >
           <img src="/assets/icon/khac/iconChatbot.svg" alt="" className="h-12 w-12" />

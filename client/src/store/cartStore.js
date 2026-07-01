@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { cartApi } from '@/api/endpoints';
+import { analyticsService } from '@/services/analyticsService';
 
 const LS_KEY = 'paw_cart_local';
 
@@ -45,6 +46,7 @@ export const useCartStore = create((set, get) => ({
       const data = await cartApi.add(productId, quantity);
       set({ cart: data });
       writeLocal(data);
+      analyticsService.trackEvent('add_to_cart', { productId, quantity }, { eventType: 'commerce' });
       return data;
     } finally {
       set({ loading: false });
@@ -57,6 +59,16 @@ export const useCartStore = create((set, get) => ({
       const data = await cartApi.addCombo(payload);
       set({ cart: data });
       writeLocal(data);
+      analyticsService.trackEvent(
+        'add_to_cart',
+        {
+          itemCount: payload?.items?.length || 0,
+          profileId: payload?.profileId,
+          durationDays: payload?.durationDays,
+          source: 'ai_combo',
+        },
+        { eventType: 'commerce' },
+      );
       return data;
     } finally {
       set({ loading: false });

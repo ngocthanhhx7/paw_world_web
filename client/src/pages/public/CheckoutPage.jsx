@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { useCartStore } from '@/store/cartStore';
 import { orderApi } from '@/api/endpoints';
+import { analyticsService } from '@/services/analyticsService';
 import { formatPrice } from '@/utils/format';
 
 const PAYMENT_METHODS = [
@@ -36,6 +37,15 @@ export default function CheckoutPage() {
   const packagingFee = 5000;
   const total = subtotal + packagingFee;
 
+  useEffect(() => {
+    if (!items.length) return;
+    analyticsService.trackEvent(
+      'checkout_started',
+      { totalAmount: total, currency: 'VND', itemCount: items.length },
+      { eventType: 'commerce', dedupeKey: `checkout:${items.map((item) => item.product).join(',')}:${total}` },
+    );
+  }, [items.length, total]);
+
   if (!items.length) {
     return (
       <div className="container-paw py-20 text-center">
@@ -54,6 +64,7 @@ export default function CheckoutPage() {
     }
     setSubmitting(true);
     try {
+      const analytics = analyticsService.getAnalyticsContext();
       const order = await orderApi.create({
         customer: { fullName: form.fullName, phone: form.phone, email: form.email },
         shippingAddress: {
@@ -64,15 +75,43 @@ export default function CheckoutPage() {
           note: form.note,
         },
         paymentMethod: form.paymentMethod,
+        analytics: {
+          ...analytics,
+          pagePath: '/thanh-toan',
+        },
       });
       await fetchCart(); // refresh – server đã clear cart
       if (form.paymentMethod === 'bank_transfer' && order.payment?.checkoutUrl) {
         window.location.assign(order.payment.checkoutUrl);
         return;
       }
+      analyticsService.trackEvent(
+        'purchase_success',
+        {
+          orderId: order._id,
+          orderCode: order.orderCode,
+          totalAmount: order.total,
+          currency: 'VND',
+          itemCount: order.items?.length || items.length,
+          paymentMethod: form.paymentMethod,
+          status: order.status,
+        },
+        { eventType: 'commerce', dedupeKey: `purchase:${order.orderCode}` },
+      );
       toast.success('Đặt hàng thành công!');
       navigate(`/dat-hang-thanh-cong/${order.orderCode}`);
     } catch (err) {
+      analyticsService.trackEvent(
+        'purchase_failed',
+        {
+          totalAmount: total,
+          currency: 'VND',
+          itemCount: items.length,
+          paymentMethod: form.paymentMethod,
+          errorCode: err?.response?.status || 'unknown',
+        },
+        { eventType: 'commerce' },
+      );
       toast.error(err?.response?.data?.message || 'Đặt hàng thất bại');
     } finally {
       setSubmitting(false);
