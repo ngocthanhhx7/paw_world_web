@@ -532,7 +532,13 @@ async function seedAdmin() {
   const existingAdmin = await Admin.findOne({ email });
 
   if (existingAdmin) {
-    console.log(`Admin exists: ${email}`);
+    console.log(`Admin exists: ${email}. Updating name and password.`);
+    existingAdmin.name = process.env.SEED_ADMIN_NAME || 'Paw World Admin';
+    existingAdmin.password = process.env.SEED_ADMIN_PASSWORD || 'pawworld@123';
+    existingAdmin.role = 'admin';
+    existingAdmin.isActive = true;
+    await existingAdmin.save();
+    console.log(`Updated admin: ${email}`);
     return;
   }
 
