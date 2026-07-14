@@ -193,9 +193,16 @@ async function run(mode) {
   const dataset = buildAnalytics30DayDataset({ now, baseline });
   validateAnalyticsDataset(dataset);
   let replaced = null;
+  let reused = false;
+  const storedBefore = await namespaceCounts();
   if (mode === '--apply') {
-    replaced = await cleanupNamespace();
-    await insertDataset(dataset);
+    reused = storedBefore.sessions > 0 && storedBefore.pageViews > 0 && storedBefore.events > 0;
+    if (reused) {
+      replaced = { sessions: 0, pageViews: 0, events: 0 };
+    } else {
+      replaced = await cleanupNamespace();
+      await insertDataset(dataset);
+    }
   }
   const output = {
     mode,
@@ -211,11 +218,12 @@ async function run(mode) {
       bouncedSessions: baseline.bouncedSessions,
     },
     projected: dataset.summary,
-    generated: {
+    generated: reused ? storedBefore : {
       sessions: dataset.sessions.length,
       pageViews: dataset.pageViews.length,
       events: dataset.events.length,
     },
+    reused,
     replaced,
     namespaceCounts: await namespaceCounts(),
   };
