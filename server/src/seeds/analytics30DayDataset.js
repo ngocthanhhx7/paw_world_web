@@ -126,8 +126,12 @@ function buildAnalytics30DayDataset({ now = new Date(), baseline = {} } = {}) {
 
   const viewCounts = Array.from({ length: sessions.length }, (_, index) => (index < bouncedToAdd ? 1 : 2));
   let allocatedViews = viewCounts.reduce((sum, count) => sum + count, 0);
-  for (let index = 0; allocatedViews < pageViewsToAdd; index = (index + 1) % sessions.length) {
-    viewCounts[index] += 1;
+  const deepSessionIndexes = Array.from(
+    { length: sessions.length - bouncedToAdd },
+    (_, index) => index + bouncedToAdd,
+  );
+  for (let index = 0; allocatedViews < pageViewsToAdd; index = (index + 1) % deepSessionIndexes.length) {
+    viewCounts[deepSessionIndexes[index]] += 1;
     allocatedViews += 1;
   }
 

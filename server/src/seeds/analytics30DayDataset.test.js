@@ -47,6 +47,10 @@ test('builds a deterministic namespaced dataset in approved target ranges', () =
   }
   assert.ok(first.summary.purchaseConversionRate >= 4 && first.summary.purchaseConversionRate <= 5.5);
   assert.ok(first.summary.bounceRate >= 40 && first.summary.bounceRate <= 48);
+  const viewsBySession = new Map();
+  for (const view of first.pageViews) viewsBySession.set(view.sessionId, (viewsBySession.get(view.sessionId) || 0) + 1);
+  const generatedBounces = [...viewsBySession.values()].filter((count) => count === 1).length;
+  assert.equal(generatedBounces, first.summary.bouncedSessions - BASELINE.bouncedSessions);
 });
 
 test('covers 30 Vietnam days and keeps references and chronology valid', () => {
