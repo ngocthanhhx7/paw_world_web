@@ -13,6 +13,7 @@
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "seed": "npm run seed -w server",
+    "seed:analytics": "npm run seed:analytics -w server --",
     "build:client": "npm run build -w client"
   },
   "devDependencies": {
