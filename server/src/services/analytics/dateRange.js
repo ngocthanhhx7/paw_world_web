@@ -67,6 +67,7 @@ function parseDateRange(query = {}, now = new Date()) {
 module.exports = {
   VIETNAM_OFFSET_MS,
   endOfVietnamDay,
+  getVietnamParts,
   parseDateRange,
   startOfVietnamDay,
 };
