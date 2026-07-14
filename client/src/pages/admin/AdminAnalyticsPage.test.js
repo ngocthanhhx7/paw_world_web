@@ -26,3 +26,8 @@ test('AdminAnalyticsPage no longer exposes English dashboard chrome', () => {
     'Buyer vs Non-buyer By Source',
   ].forEach((label) => assert.doesNotMatch(source, new RegExp(label)));
 });
+
+test('AdminAnalyticsPage defaults and resets to the last 30 days preset', () => {
+  assert.equal(source.match(/preset:\s*'last_30_days'/g)?.length, 2);
+  assert.equal(source.match(/preset:\s*'last_7_days'/g)?.length ?? 0, 0);
+});

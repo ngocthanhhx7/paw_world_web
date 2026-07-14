@@ -145,7 +145,7 @@ function DataTable({ columns, rows }) {
 
 export default function AdminAnalyticsPage() {
   const [filters, setFilters] = useState({
-    preset: 'last_7_days',
+    preset: 'last_30_days',
     startDate: '',
     endDate: '',
     source: '',
@@ -273,7 +273,7 @@ export default function AdminAnalyticsPage() {
             <option value="ai">AI</option>
             <option value="commerce">Mua hàng</option>
           </select>
-          <button type="button" className="btn-ghost" onClick={() => setFilters({ preset: 'last_7_days', startDate: '', endDate: '', source: '', campaign: '', device: '', eventType: '', aiStatus: '', buyerStatus: '' })}>
+          <button type="button" className="btn-ghost" onClick={() => setFilters({ preset: 'last_30_days', startDate: '', endDate: '', source: '', campaign: '', device: '', eventType: '', aiStatus: '', buyerStatus: '' })}>
             Xóa lọc
           </button>
         </div>
